@@ -17,28 +17,31 @@ import javax.swing.event.MouseInputListener;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.input.PanMouseInputListener;
 import org.jxmapviewer.input.ZoomMouseWheelListenerCursor;
-import org.jxmapviewer.viewer.DefaultTileFactory;
+import org.jxmapviewer.viewer.TileFactory;
+import interface_adapter.map.MapViewModel;
 import org.jxmapviewer.viewer.GeoPosition;
 
 /** Displays Mapbox imagery with drag, wheel, and button navigation. */
 public class MapPanel extends JPanel {
     /**
      * Builds the interactive map, or setup instructions when no token is supplied.
-     * @param token public Mapbox token supplied by application configuration
+     * @param tileFactory configured map provider, or null when setup is missing
+     * @param viewModel provider-independent display state updated by the presenter
      */
-    public MapPanel(String token) {
+    public MapPanel(TileFactory tileFactory, MapViewModel viewModel) {
         super(new BorderLayout());
-        if (token == null || token.trim().isEmpty()) {
+        if (tileFactory == null) {
             add(new JLabel("<html>Mapbox setup required.<br>Set MAPBOX_ACCESS_TOKEN "
                     + "in your IntelliJ run configuration, then restart.</html>"), BorderLayout.CENTER);
             return;
         }
         JXMapViewer mapViewer = new JXMapViewer();
-        DefaultTileFactory tileFactory = new DefaultTileFactory(new MapboxTileFactoryInfo(token));
-        tileFactory.setThreadPoolSize(4);
         mapViewer.setTileFactory(tileFactory);
-        mapViewer.setZoom(8);
-        mapViewer.setAddressLocation(new GeoPosition(43.6629, -79.3957));
+        viewModel.addPropertyChangeListener(event -> {
+            // Only the rendering layer knows the widget's reversed zoom convention.
+            mapViewer.setZoom(tileFactory.getInfo().getTotalMapZoom() - viewModel.getZoom());
+            mapViewer.setAddressLocation(new GeoPosition(viewModel.getLatitude(), viewModel.getLongitude()));
+        });
         MouseInputListener panListener = new PanMouseInputListener(mapViewer);
         mapViewer.addMouseListener(panListener);
         mapViewer.addMouseMotionListener(panListener);
@@ -48,10 +51,10 @@ public class MapPanel extends JPanel {
         JPanel controls = new JPanel();
         JButton zoomIn = new JButton("+");
         zoomIn.setToolTipText("Zoom in");
-        zoomIn.addActionListener(event -> mapViewer.setZoom(Math.max(0, mapViewer.getZoom() - 1)));
+        zoomIn.addActionListener(event -> mapViewer.setZoom(Math.max(tileFactory.getInfo().getMinimumZoomLevel(), mapViewer.getZoom() - 1)));
         JButton zoomOut = new JButton("−");
         zoomOut.setToolTipText("Zoom out");
-        zoomOut.addActionListener(event -> mapViewer.setZoom(Math.min(19, mapViewer.getZoom() + 1)));
+        zoomOut.addActionListener(event -> mapViewer.setZoom(Math.min(tileFactory.getInfo().getMaximumZoomLevel(), mapViewer.getZoom() + 1)));
         controls.add(zoomIn);
         controls.add(zoomOut);
         controls.add(new JLabel("Drag to move | Scroll to zoom"));

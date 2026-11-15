@@ -11,6 +11,11 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.junit.jupiter.api.Test;
 import org.jxmapviewer.JXMapViewer;
+import org.jxmapviewer.viewer.DefaultTileFactory;
+import interface_adapter.map.MapController;
+import interface_adapter.map.MapPresenter;
+import interface_adapter.map.MapViewModel;
+import use_case.display_map.DisplayMapInteractor;
 import static org.junit.jupiter.api.Assertions.*;
 
 /** Exercises home-screen composition and map navigation on Swing's thread. */
@@ -19,10 +24,10 @@ class MapPanelTest {
     @Test
     void missingTokenShowsSetup() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
-            MapPanel panel = new MapPanel(null);
+            MapPanel panel = new MapPanel(null, new MapViewModel());
             assertEquals(1, panel.getComponentCount());
             assertTrue(((JLabel) panel.getComponent(0)).getText().contains("MAPBOX_ACCESS_TOKEN"));
-            HomeView home = new HomeView(panel);
+            HomeView home = new HomeView(panel, new MapController(() -> { }));
             assertSame(panel, ((BorderLayout) home.getLayout()).getLayoutComponent(BorderLayout.CENTER));
         });
     }
@@ -31,13 +36,21 @@ class MapPanelTest {
     @Test
     void navigationWorksAndZoomIsBounded() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
-            MapPanel panel = new MapPanel("pk.test");
+            MapViewModel viewModel = new MapViewModel();
+            MapPanel panel = new MapPanel(
+                    new DefaultTileFactory(new MapboxTileFactoryInfo("pk.test")), viewModel);
+            MapController controller = new MapController(
+                    new DisplayMapInteractor(new MapPresenter(viewModel)));
+            new HomeView(panel, controller);
             BorderLayout layout = (BorderLayout) panel.getLayout();
             JXMapViewer viewer = (JXMapViewer) layout.getLayoutComponent(BorderLayout.CENTER);
             JPanel controls = (JPanel) viewer.getComponent(0);
             JButton zoomIn = (JButton) controls.getComponent(0);
             JButton zoomOut = (JButton) controls.getComponent(1);
+            assertEquals(43.6629, viewer.getAddressLocation().getLatitude(), 0.00001);
+            assertEquals(-79.3957, viewer.getAddressLocation().getLongitude(), 0.00001);
             int initialZoom = viewer.getZoom();
+            assertEquals(8, initialZoom);
             zoomIn.doClick(0);
             assertEquals(initialZoom - 1, viewer.getZoom());
             zoomOut.doClick(0);
