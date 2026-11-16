@@ -1,4 +1,4 @@
-package models;
+package entity;
 
 public class Pin {
     int id; // The name of the pin
