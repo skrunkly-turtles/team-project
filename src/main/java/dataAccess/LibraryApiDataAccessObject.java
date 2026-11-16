@@ -18,7 +18,7 @@ import org.json.JSONObject;
 public class LibraryApiDataAccessObject implements LookUpBookDataAccessInterface {
     private static final String SEARCH_URL = "https://openlibrary.org/search.json";
     private static final String USER_AGENT = "CSC207 Library App (taysen.victory@mail.utoronto.ca)";
-    private static final int RESULT_LIMIT = 5;
+    private static final int RESULT_LIMIT = 15;
     private final OkHttpClient client = new OkHttpClient();
 
     @Override

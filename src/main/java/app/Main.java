@@ -1,33 +1,31 @@
 package app;
+
+import controller.LookUpBookController;
 import dataAccess.LibraryApiDataAccessObject;
-import entity.Book;
-import views.LookUpBookState;
+import presenter.LookUpBookPresenter;
+import userCase.LookUpBookInteractor;
 import views.LookUpBookView;
 import views.LookUpBookViewModel;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Main {
+
     public static void main(String[] args) {
-        LibraryApiDataAccessObject dao = new LibraryApiDataAccessObject();
-        List<Book> books = dao.searchByTitle("the lord of the rings");
-        System.out.println(books);
-
-        List<String> booksString = new ArrayList<>();
-        for (Book book : books) {
-            booksString.add(book.toString());
-        }
-
+        // Built from the outside in, so no object needs something that doesn't exist yet.
         LookUpBookViewModel viewModel = new LookUpBookViewModel();
-        viewModel.setState(new LookUpBookState(booksString, ""));
-        LookUpBookView view = new LookUpBookView(viewModel);
+        LookUpBookPresenter presenter = new LookUpBookPresenter(viewModel);
+        LibraryApiDataAccessObject dataAccess = new LibraryApiDataAccessObject();
+        LookUpBookInteractor interactor = new LookUpBookInteractor(dataAccess, presenter);
+        LookUpBookController controller = new LookUpBookController(interactor);
+        LookUpBookView view = new LookUpBookView(controller, viewModel);
 
-        JFrame frame = new JFrame("Library");
-        frame.setContentPane(view);                       // put the view in the window
-        frame.setSize(500, 400);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            JFrame frame = new JFrame("Library");
+            frame.setContentPane(view);
+            frame.setSize(500, 400);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setVisible(true);
+        });
     }
 }

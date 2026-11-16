@@ -7,15 +7,23 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 public class LookUpBookView extends JPanel implements LookUpBookViewModelListener {
+    LookUpBookController controller;
+    private final LookUpBookViewModel viewModel;
     private final JTextField searchField = new JTextField(20);
     private final JButton searchButton = new JButton("Search");
-
     private final DefaultListModel<String> listModel = new DefaultListModel<>();
 
 
-    public LookUpBookView(LookUpBookViewModel viewModel) {
+    public LookUpBookView(LookUpBookController controller, LookUpBookViewModel viewModel) {
+        this.controller = controller;
+        this.viewModel = viewModel;
+        viewModel.addListener(this);
+
         setLayout(new BorderLayout());
         JPanel top = new JPanel();
+
+        searchButton.addActionListener(event -> search());
+
         top.add(searchField);
         top.add(searchButton);
 
@@ -37,8 +45,11 @@ public class LookUpBookView extends JPanel implements LookUpBookViewModelListene
 
     @Override
     public void stateChanged() {
+        listModel.clear();
+        listModel.addAll(viewModel.getState().getResults());
     }
 
-    public void setLookUpBookController(LookUpBookController controller) {
+    private void search() {
+        controller.execute(searchField.getText());
     }
 }
