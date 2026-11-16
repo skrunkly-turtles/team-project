@@ -1,11 +1,16 @@
 package views;
 
 public class LookUpBookViewModel {
-    public void setState(LookUpBookState state) {
+    private LookUpBookState state;
+
+    public void setState(LookUpBookState newState) {
+//        state.setResults(null);
+        state = newState;
     }
 
     public LookUpBookState getState() {
-        return null;
+//        return getState();
+        return state;
     }
 
     public void addListener(LookUpBookViewModelListener listener) {

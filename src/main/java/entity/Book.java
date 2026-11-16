@@ -10,4 +10,9 @@ public class Book {
         this.author = author;
         this.year = year;
     }
+
+    @Override
+    public String toString() {
+        return title + " by " + author + " (" + year + ")";
+    }
 }
