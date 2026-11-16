@@ -10,6 +10,10 @@ import interface_adapter.map.MapController;
 import interface_adapter.map.MapPresenter;
 import interface_adapter.map.MapViewModel;
 import use_case.display_map.DisplayMapInteractor;
+import use_case.select_location.SelectLocationInteractor;
+import interface_adapter.map.LocationSelectionController;
+import interface_adapter.map.LocationSelectionPresenter;
+import interface_adapter.map.LocationSelectionViewModel;
 
 /** Starts and assembles the application. */
 public class Main {
@@ -34,6 +38,15 @@ public class Main {
                 tileFactory.setThreadPoolSize(4);
             }
             MapPanel mapPanel = new MapPanel(tileFactory, viewModel);
+            LocationSelectionViewModel selectionViewModel = new LocationSelectionViewModel();
+            LocationSelectionPresenter selectionPresenter = new LocationSelectionPresenter(
+                    selectionViewModel, selectedLocation -> {
+                        // Connect this callback to book selection once the shared handoff is agreed.
+                        // The confirmed location remains in selectionViewModel until cancellation.
+                    });
+            LocationSelectionController selectionController = new LocationSelectionController(
+                    new SelectLocationInteractor(selectionPresenter));
+            mapPanel.enableLocationSelection(selectionController, selectionViewModel);
             window.setContentPane(new HomeView(mapPanel, controller));
             window.setSize(1000, 700);
             window.setLocationRelativeTo(null);

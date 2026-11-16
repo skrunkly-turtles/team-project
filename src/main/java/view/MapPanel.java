@@ -23,6 +23,7 @@ import org.jxmapviewer.viewer.GeoPosition;
 
 /** Displays Mapbox imagery with drag, wheel, and button navigation. */
 public class MapPanel extends JPanel {
+    private final JXMapViewer mapViewer;
     /**
      * Builds the interactive map, or setup instructions when no token is supplied.
      * @param tileFactory configured map provider, or null when setup is missing
@@ -31,11 +32,12 @@ public class MapPanel extends JPanel {
     public MapPanel(TileFactory tileFactory, MapViewModel viewModel) {
         super(new BorderLayout());
         if (tileFactory == null) {
+            mapViewer = null;
             add(new JLabel("<html>Mapbox setup required.<br>Set MAPBOX_ACCESS_TOKEN "
                     + "in your IntelliJ run configuration, then restart.</html>"), BorderLayout.CENTER);
             return;
         }
-        JXMapViewer mapViewer = new JXMapViewer();
+        mapViewer = new JXMapViewer();
         mapViewer.setTileFactory(tileFactory);
         viewModel.addPropertyChangeListener(event -> {
             // Only the rendering layer knows the widget's reversed zoom convention.
@@ -88,4 +90,18 @@ public class MapPanel extends JPanel {
         attribution.add(credits, BorderLayout.CENTER);
         add(attribution, BorderLayout.SOUTH);
     }
+
+    /**
+     * Adds the location-selection entry point while the sidebar is developed separately.
+     * @param controller selection request adapter
+     * @param selectionViewModel state for the temporary marker
+     */
+    public void enableLocationSelection(
+            interface_adapter.map.LocationSelectionController controller,
+            interface_adapter.map.LocationSelectionViewModel selectionViewModel) {
+        if (mapViewer != null) {
+            add(new LocationSelectionPanel(mapViewer, controller, selectionViewModel), BorderLayout.NORTH);
+        }
+    }
+
 }
