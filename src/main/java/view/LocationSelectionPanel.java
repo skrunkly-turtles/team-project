@@ -29,17 +29,15 @@ public class LocationSelectionPanel extends JPanel {
      */
     public LocationSelectionPanel(JXMapViewer viewer, LocationSelectionController controller,
                                   LocationSelectionViewModel viewModel) {
-        JButton start = new JButton("Choose pin location");
         JButton confirm = new JButton("Continue");
         JButton cancel = new JButton("Cancel");
         JLabel status = new JLabel("Choose a location for a new pin.");
         confirm.setEnabled(false);
         cancel.setEnabled(false);
-        add(start);
+        setVisible(false);
         add(confirm);
         add(cancel);
         add(status);
-        start.addActionListener(event -> controller.start());
         confirm.addActionListener(event -> controller.confirm());
         cancel.addActionListener(event -> controller.cancel());
         WaypointPainter<DefaultWaypoint> markerPainter = new WaypointPainter<>();
@@ -48,7 +46,8 @@ public class LocationSelectionPanel extends JPanel {
             SelectLocationOutputData state = viewModel.getState();
             boolean selecting = state.getStage() == Stage.SELECTING;
             SelectedLocation location = state.getLocation();
-            start.setEnabled(state.getStage() == Stage.INACTIVE);
+            setVisible(state.getStage() != Stage.INACTIVE);
+            revalidate();
             confirm.setEnabled(selecting && location != null);
             cancel.setEnabled(state.getStage() != Stage.INACTIVE);
             if (location == null) {
