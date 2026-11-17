@@ -4,6 +4,12 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import view.HomeView;
 import view.HomeSidebar;
+import view.PinDetailsPanel;
+import interface_adapter.map.PinDetailsController;
+import interface_adapter.map.PinDetailsPresenter;
+import interface_adapter.map.PinDetailsViewModel;
+import use_case.pin_details.PinDetailsInteractor;
+import use_case.pin_details.PinDetailsOutputData;
 import javax.swing.JLabel;
 import java.awt.BorderLayout;
 import use_case.select_location.SelectLocationOutputData.Stage;
@@ -42,14 +48,30 @@ public class Main {
                 tileFactory.setThreadPoolSize(4);
             }
             MapPanel mapPanel = new MapPanel(tileFactory, viewModel);
+            PinDetailsViewModel detailsViewModel = new PinDetailsViewModel();
+            PinDetailsController detailsController = new PinDetailsController(
+                    new PinDetailsInteractor(new PinDetailsPresenter(detailsViewModel)));
+            PinDetailsPanel detailsPanel = new PinDetailsPanel(detailsController, detailsViewModel);
             LocationSelectionViewModel selectionViewModel = new LocationSelectionViewModel();
             LocationSelectionPresenter selectionPresenter = new LocationSelectionPresenter(
-                    selectionViewModel, selectedLocation -> {
-                        // The confirmed location remains in selectionViewModel until cancellation.
-                    });
+                    selectionViewModel, detailsController::open);
+            // Preview only: insert Taysen's passage step before opening details at integration.
             LocationSelectionController selectionController = new LocationSelectionController(
                     new SelectLocationInteractor(selectionPresenter));
             mapPanel.enableLocationSelection(selectionController, selectionViewModel);
+            detailsViewModel.addPropertyChangeListener(event -> {
+                if (detailsViewModel.getState().getStage() == PinDetailsOutputData.Stage.BACK) {
+                    selectionController.resume();
+                } else if (detailsViewModel.getState().getStage() == PinDetailsOutputData.Stage.CANCELLED
+                        && selectionViewModel.getState().getStage() != Stage.INACTIVE) {
+                    selectionController.cancel();
+                }
+            });
+            selectionViewModel.addPropertyChangeListener(event -> {
+                if (selectionViewModel.getState().getStage() == Stage.INACTIVE) {
+                    detailsController.cancel();
+                }
+            });
             JLabel navigationStatus = new JLabel(" ");
             // Replace these preview callbacks with the teammates' controller actions at integration.
             HomeSidebar sidebar = new HomeSidebar(selectionController::start,
@@ -60,6 +82,7 @@ public class Main {
                     sidebar.setCreationActive(selectionViewModel.getState().getStage() != Stage.INACTIVE));
             HomeView home = new HomeView(mapPanel, controller, sidebar);
             home.add(navigationStatus, BorderLayout.SOUTH);
+            home.add(detailsPanel, BorderLayout.EAST);
             window.setContentPane(home);
             window.setSize(1000, 700);
             window.setLocationRelativeTo(null);
