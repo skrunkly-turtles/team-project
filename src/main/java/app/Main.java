@@ -3,6 +3,10 @@ package app;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import view.HomeView;
+import view.HomeSidebar;
+import javax.swing.JLabel;
+import java.awt.BorderLayout;
+import use_case.select_location.SelectLocationOutputData.Stage;
 import view.MapPanel;
 import view.MapboxTileFactoryInfo;
 import org.jxmapviewer.viewer.DefaultTileFactory;
@@ -41,13 +45,22 @@ public class Main {
             LocationSelectionViewModel selectionViewModel = new LocationSelectionViewModel();
             LocationSelectionPresenter selectionPresenter = new LocationSelectionPresenter(
                     selectionViewModel, selectedLocation -> {
-                        // Connect this callback to book selection once the shared handoff is agreed.
                         // The confirmed location remains in selectionViewModel until cancellation.
                     });
             LocationSelectionController selectionController = new LocationSelectionController(
                     new SelectLocationInteractor(selectionPresenter));
             mapPanel.enableLocationSelection(selectionController, selectionViewModel);
-            window.setContentPane(new HomeView(mapPanel, controller));
+            JLabel navigationStatus = new JLabel(" ");
+            // Replace these preview callbacks with the teammates' controller actions at integration.
+            HomeSidebar sidebar = new HomeSidebar(selectionController::start,
+                    () -> navigationStatus.setText("Filter Pins: Katelyn's filtering action will connect here."),
+                    () -> navigationStatus.setText("Profile: Rohail's profile action will connect here."),
+                    () -> navigationStatus.setText("Log Out: Rohail's logout action will connect here."));
+            selectionViewModel.addPropertyChangeListener(event ->
+                    sidebar.setCreationActive(selectionViewModel.getState().getStage() != Stage.INACTIVE));
+            HomeView home = new HomeView(mapPanel, controller, sidebar);
+            home.add(navigationStatus, BorderLayout.SOUTH);
+            window.setContentPane(home);
             window.setSize(1000, 700);
             window.setLocationRelativeTo(null);
             window.setVisible(true);
