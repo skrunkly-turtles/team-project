@@ -46,7 +46,7 @@ public class LocationSelectionPanel extends JPanel {
             SelectLocationOutputData state = viewModel.getState();
             boolean selecting = state.getStage() == Stage.SELECTING;
             SelectedLocation location = state.getLocation();
-            setVisible(state.getStage() != Stage.INACTIVE);
+            setVisible(selecting);
             revalidate();
             confirm.setEnabled(selecting && location != null);
             cancel.setEnabled(state.getStage() != Stage.INACTIVE);

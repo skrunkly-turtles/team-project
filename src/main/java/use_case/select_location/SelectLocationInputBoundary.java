@@ -12,6 +12,9 @@ public interface SelectLocationInputBoundary {
      */
     void select(double latitude, double longitude);
 
+    /** Resumes an existing confirmed selection for revision. */
+    void resume();
+
     /** Continues only when a valid location has been selected. */
     void confirm();
 

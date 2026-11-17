@@ -85,4 +85,23 @@ class SelectLocationInteractorTest {
         input.cancel();
         assertNull(results.get(7).getLocation());
     }
+
+    /** Back from details restores selection without losing the confirmed coordinate. */
+    @Test
+    void resumesConfirmedSelection() {
+        List<SelectLocationOutputData> results = new ArrayList<>();
+        SelectLocationInteractor input = new SelectLocationInteractor(results::add);
+        input.resume();
+        assertTrue(results.isEmpty());
+        input.start();
+        input.select(43, -79);
+        SelectedLocation location = results.get(1).getLocation();
+        input.confirm();
+        input.resume();
+        assertEquals(Stage.SELECTING, results.get(3).getStage());
+        assertSame(location, results.get(3).getLocation());
+        input.resume();
+        assertEquals(4, results.size());
+    }
+
 }

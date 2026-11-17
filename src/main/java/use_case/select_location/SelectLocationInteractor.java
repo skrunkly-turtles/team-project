@@ -43,6 +43,14 @@ public class SelectLocationInteractor implements SelectLocationInputBoundary {
         output.present(new SelectLocationOutputData(stage, location, ""));
     }
 
+    /** Resumes a confirmed selection while keeping the existing location. */
+    @Override
+    public void resume() {
+        if (stage != Stage.CONFIRMED) { return; }
+        stage = Stage.SELECTING;
+        output.present(new SelectLocationOutputData(stage, location, ""));
+    }
+
     /** Retains the selected location for the remaining creation steps. */
     @Override
     public void confirm() {
