@@ -1,6 +1,6 @@
 package app;
 
-import data_access.FileUserDataAccessObject;
+import data_access.JsonUserDataAccessObject;
 import data_access.InMemoryCurrentUserSession;
 import data_access.Pbkdf2PasswordHasher;
 import interface_adapter.ViewManagerModel;
@@ -44,7 +44,7 @@ import view.ViewManager;
  * optional reusable components rather than being implemented in this application.
  */
 public final class AppBuilder {
-  private Path accountFile = Path.of("data", "accounts.properties");
+  private Path accountFile = Path.of("data", "users.json");
   private JComponent friendsComponent;
   private JComponent pinsComponent;
 
@@ -83,7 +83,7 @@ public final class AppBuilder {
 
   /** Builds a runnable account and general-profile application. */
   public JFrame build() {
-    FileUserDataAccessObject accounts = new FileUserDataAccessObject(accountFile);
+    JsonUserDataAccessObject accounts = new JsonUserDataAccessObject(accountFile);
     InMemoryCurrentUserSession session = new InMemoryCurrentUserSession();
     Pbkdf2PasswordHasher hasher = new Pbkdf2PasswordHasher();
     ViewManagerModel navigator = new ViewManagerModel();
