@@ -5,5 +5,7 @@ public interface LookUpBookOutputBoundary {
 
     void prepareFailView(String error);
 
-    void prepareReaderView();
+    void prepareReaderView(LookUpBookReaderData readerData);
+
+    void prepareOpenFailView(String error);
 }

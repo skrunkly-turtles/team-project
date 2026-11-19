@@ -44,5 +44,6 @@ public class LookUpBookController {
     }
 
     public void openBook(String bookId) {
+        interactor.openBook(bookId);
     }
 }
