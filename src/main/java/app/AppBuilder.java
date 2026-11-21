@@ -9,6 +9,12 @@ import interface_adapter.change_password.ChangePasswordPresenter;
 import interface_adapter.change_password.ChangePasswordViewModel;
 import interface_adapter.home.HomeViewModel;
 import interface_adapter.map.MapController;
+import interface_adapter.map.LocationSelectionController;
+import interface_adapter.map.LocationSelectionPresenter;
+import interface_adapter.map.LocationSelectionViewModel;
+import use_case.select_location.SelectLocationInteractor;
+import use_case.select_location.SelectedLocation;
+import java.util.function.Consumer;
 import interface_adapter.map.MapPresenter;
 import interface_adapter.map.MapViewModel;
 import use_case.display_map.DisplayMapInteractor;
@@ -55,6 +61,17 @@ public final class AppBuilder {
   private JComponent friendsComponent;
   private JComponent pinsComponent;
   private String mapboxToken = System.getenv("MAPBOX_ACCESS_TOKEN");
+  private Consumer<SelectedLocation> onLocationSelected = location -> { };
+
+  /**
+   * Connects confirmed coordinates to the next creation step.
+   * @param action passage-navigation callback; no pin is saved here
+   * @return this builder
+   */
+  public AppBuilder onLocationSelected(Consumer<SelectedLocation> action) {
+    onLocationSelected = Objects.requireNonNull(action, "action");
+    return this;
+  }
 
   /**
    * Configures map imagery; null displays local setup instructions.
@@ -154,6 +171,16 @@ public final class AppBuilder {
       tileFactory.setThreadPoolSize(4);
     }
     MapPanel mapPanel = new MapPanel(tileFactory, mapModel);
+    // Location-selection integration created with AI assistance.
+    LocationSelectionViewModel selectionModel = new LocationSelectionViewModel();
+    LocationSelectionController selectionController = new LocationSelectionController(
+        new SelectLocationInteractor(new LocationSelectionPresenter(selectionModel, onLocationSelected)));
+    mapPanel.enableLocationSelection(selectionController, selectionModel);
+    homeModel.addPropertyChangeListener(event -> {
+      if (homeModel.getState().getUsername() == null) {
+        selectionController.cancel();
+      }
+    });
     viewManager.add(new HomeView(mapPanel, mapController,
         logoutController, profileController, homeModel), "home");
     viewManager.add(profileView, "profile");

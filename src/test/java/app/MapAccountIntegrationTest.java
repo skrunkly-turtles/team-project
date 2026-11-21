@@ -4,6 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.event.MouseEvent;
+import java.awt.event.InputEvent;
+import org.jxmapviewer.viewer.WaypointPainter;
+import use_case.select_location.SelectedLocation;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,8 +34,9 @@ class MapAccountIntegrationTest {
   @Test
   void accountJourneyUsesTheRealMapHome() throws Exception {
     SwingUtilities.invokeAndWait(() -> {
+      List<SelectedLocation> handoffs = new ArrayList<>();
       ViewManager screens = new AppBuilder().accountFile(directory.resolve("users.json"))
-          .mapboxToken("pk.test").buildContent();
+          .mapboxToken("pk.test").onLocationSelected(handoffs::add).buildContent();
       assertInstanceOf(LoginView.class, visibleScreen(screens));
       click(visibleScreen(screens), "Create account");
       assertInstanceOf(SignupView.class, visibleScreen(screens));
@@ -53,6 +58,16 @@ class MapAccountIntegrationTest {
       JXMapViewer viewer = fields(home, JXMapViewer.class).get(0);
       assertEquals(8, viewer.getZoom());
       assertEquals(43.6629, viewer.getAddressLocation().getLatitude(), 0.00001);
+      click(home, "Choose pin location");
+      viewer.setSize(800, 600);
+      viewer.dispatchEvent(new MouseEvent(viewer, MouseEvent.MOUSE_PRESSED, 0,
+          InputEvent.BUTTON1_DOWN_MASK, 400, 300, 1, false, MouseEvent.BUTTON1));
+      viewer.dispatchEvent(new MouseEvent(viewer, MouseEvent.MOUSE_RELEASED, 1,
+          0, 400, 300, 1, false, MouseEvent.BUTTON1));
+      click(home, "Continue");
+      assertEquals(1, handoffs.size());
+      assertEquals(43.6629, handoffs.get(0).getLatitude(), 0.001);
+      assertEquals(1, ((WaypointPainter<?>) viewer.getOverlayPainter()).getWaypoints().size());
       click(home, "Open My Profile");
       assertInstanceOf(ProfileView.class, visibleScreen(screens));
       click(visibleScreen(screens), "Back to map");
@@ -60,6 +75,9 @@ class MapAccountIntegrationTest {
       click(home, "Log Out");
       assertInstanceOf(LoginView.class, visibleScreen(screens));
       assertFalse(fields(home, JLabel.class).stream().anyMatch(label -> "Welcome, maptester".equals(label.getText())));
+      assertTrue(((WaypointPainter<?>) viewer.getOverlayPainter()).getWaypoints().isEmpty());
+      assertTrue(fields(home, JButton.class).stream()
+          .anyMatch(button -> "Choose pin location".equals(button.getText()) && button.isEnabled()));
     });
   }
 
