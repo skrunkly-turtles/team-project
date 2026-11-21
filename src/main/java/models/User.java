@@ -7,7 +7,8 @@ import java.util.Objects;
 /**
  * A registered application user, preserving the team's original account/pin/friend model.
  *
- * <p>The {@code passwordHash} field contains a one-way password hash, never plaintext.
+ * <p>The {@code passwordHash} field contains a one-way password hash. See Pbkdf2PasswordHasher
+ * for more details.
  * Pin and friendship use cases belong to the other team members.
  */
 public final class User {
