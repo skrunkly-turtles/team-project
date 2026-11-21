@@ -1,0 +1,29 @@
+@startuml
+title User Login - Clean Architecture Flow
+actor User
+participant "LoginView" as View
+participant "LoginController" as Controller
+participant "LoginInputBoundary\n(LoginInteractor)" as Interactor
+participant "LoginUserDataAccessInterface\n(FileUserDataAccessObject)" as DAO
+participant "PasswordHasher\n(Pbkdf2PasswordHasher)" as Hasher
+participant "CurrentUserSession" as Session
+participant "LoginOutputBoundary\n(LoginPresenter)" as Presenter
+participant "HomeViewModel" as Model
+participant "ViewManagerModel" as Navigator
+User -> View : enter username/password and click Login
+View -> Controller : execute(username,password)
+Controller -> Interactor : execute(LoginInputData)
+Interactor -> DAO : get(username)
+DAO --> Interactor : User with encoded hash
+Interactor -> Hasher : matches(password,hash)
+Hasher --> Interactor : true/false
+alt valid credentials and signed out
+  Interactor -> Session : signIn(username)
+  Interactor -> Presenter : prepareSuccessView(LoginOutputData)
+  Presenter -> Model : setState(authorized username)
+  Presenter -> Navigator : show("home")
+else invalid credentials
+  Interactor -> Presenter : prepareFailView(message)
+  Presenter -> View : notify LoginViewModel update
+end
+@enduml
