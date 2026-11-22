@@ -8,7 +8,7 @@ Uses JXMapViewer2 (LGPL-3.0) for Swing navigation and Mapbox Static Tiles for st
 2. Reload the Maven project in IntelliJ.
 3. Open **Run > Edit Configurations > Main** and set `MAPBOX_ACCESS_TOKEN` under Environment variables.
 4. Keep **Store as project file** unchecked and keep the token out of commits.
-5. Run `app.Main`.
+5. Run `app.Main`, then create an account or log in to open the home map.
 
 The map starts near U of T. Drag to pan, scroll to zoom, or use the bottom-right + / − buttons.
 Missing tokens show setup instructions. If tiles stay blank, check the token and network connection.
@@ -17,7 +17,7 @@ Missing tokens show setup instructions. If tiles stay blank, check the token and
 
 `HomeView → MapController → DisplayMapInteractor → MapPresenter → MapViewModel → MapPanel`
 
-- `Main` wires dependencies and configures the tile provider.
+- `Main` starts the application; `AppBuilder` wires account navigation, map dependencies, and the tile provider.
 - `use_case/display_map` prepares the initial location and zoom through input/output boundaries.
 - `interface_adapter/map` handles requests, presentation, and observable display state.
 - `view` handles Swing rendering, navigation, and tile URL adaptation.
@@ -26,7 +26,7 @@ Zoom increases with detail in the view model; `MapPanel` converts it to JXMapVie
 
 ## Tests
 
-Run `mvn test` with Java 17. The 24 tests run headlessly without live tile requests and cover map initialization, adapter behavior, missing tokens, tile URLs, dragging, zooming, and control positioning after resize.
+Run `mvn test` with Java 17. The combined account and map tests run on Java 17. Map tests run headlessly without live tile requests and cover initialization, adapters, missing tokens, tile URLs, dragging, zooming, and control positioning after resize. Integration tests cover signup/login → home map → profile → map → logout with temporary account files.
 Check live imagery, attribution links, navigation, resizing, and window closing manually when changing the UI.
 
 ## References
@@ -39,6 +39,6 @@ Check live imagery, attribution links, navigation, resizing, and window closing 
 
 On `john-21-pin-details`, Add Pin → choose a location → Continue opens the details preview beside the map. The real flow will insert Taysen’s passage selection before this form. Create Pin remains disabled until that handoff and #23 saving are connected.
 
-Thoughts and a PNG/JPEG attachment are optional; choose an audience explicitly. Back retains the draft while revising the location. Cancel clears it. Images are previewed locally (up to 10 MB / 20 million pixels) without uploading or copying files. Those are local preview limits; persistent image storage remains a team decision.
+Thoughts and a PNG/JPEG attachment are optional; choose an audience explicitly. Back retains the draft while revising the location. Cancel clears it. Logging out also clears the entire draft, selected marker, text, audience, and image preview. Images are previewed locally (up to 10 MB / 20 million pixels) without uploading or copying files. Those are local preview limits; persistent image storage remains a team decision.
 
 The draft audience is temporary state; mapping it to the shared Pin representation and enforcing read permissions remain integration work. No entity or pin-storage implementation is changed. Implementation, tests, and documentation were created with AI assistance.

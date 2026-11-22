@@ -1,92 +1,27 @@
 package app;
 
-import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
-import view.HomeView;
-import view.HomeSidebar;
-import view.PinDetailsPanel;
-import interface_adapter.map.PinDetailsController;
-import interface_adapter.map.PinDetailsPresenter;
-import interface_adapter.map.PinDetailsViewModel;
-import use_case.pin_details.PinDetailsInteractor;
-import use_case.pin_details.PinDetailsOutputData;
-import javax.swing.JLabel;
-import java.awt.BorderLayout;
-import use_case.select_location.SelectLocationOutputData.Stage;
-import view.MapPanel;
-import view.MapboxTileFactoryInfo;
-import org.jxmapviewer.viewer.DefaultTileFactory;
-import interface_adapter.map.MapController;
-import interface_adapter.map.MapPresenter;
-import interface_adapter.map.MapViewModel;
-import use_case.display_map.DisplayMapInteractor;
-import use_case.select_location.SelectLocationInteractor;
-import interface_adapter.map.LocationSelectionController;
-import interface_adapter.map.LocationSelectionPresenter;
-import interface_adapter.map.LocationSelectionViewModel;
+import javax.swing.UIManager;
 
-/** Starts and assembles the application. */
-public class Main {
+/** Desktop entry point for the CSC207 Passage Map account and profile prototype. */
+public final class Main {
+  /** Prevents constructing a utility-only entry point. */
+  private Main() {
+  }
 
-    /**
-     * Opens the application window on Swing's event dispatch thread.
-     *
-     * @param args command-line arguments, currently unused
-     */
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame window = new JFrame("Passage Map");
-            window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            // Assemble the map workflow and configure the tile provider.
-            MapViewModel viewModel = new MapViewModel();
-            MapPresenter presenter = new MapPresenter(viewModel);
-            MapController controller = new MapController(new DisplayMapInteractor(presenter));
-            String token = System.getenv("MAPBOX_ACCESS_TOKEN");
-            DefaultTileFactory tileFactory = null;
-            if (token != null && !token.trim().isEmpty()) {
-                tileFactory = new DefaultTileFactory(new MapboxTileFactoryInfo(token));
-                tileFactory.setThreadPoolSize(4);
-            }
-            MapPanel mapPanel = new MapPanel(tileFactory, viewModel);
-            PinDetailsViewModel detailsViewModel = new PinDetailsViewModel();
-            PinDetailsController detailsController = new PinDetailsController(
-                    new PinDetailsInteractor(new PinDetailsPresenter(detailsViewModel)));
-            PinDetailsPanel detailsPanel = new PinDetailsPanel(detailsController, detailsViewModel);
-            LocationSelectionViewModel selectionViewModel = new LocationSelectionViewModel();
-            LocationSelectionPresenter selectionPresenter = new LocationSelectionPresenter(
-                    selectionViewModel, detailsController::open);
-            // Preview only: insert Taysen's passage step before opening details at integration.
-            LocationSelectionController selectionController = new LocationSelectionController(
-                    new SelectLocationInteractor(selectionPresenter));
-            mapPanel.enableLocationSelection(selectionController, selectionViewModel);
-            detailsViewModel.addPropertyChangeListener(event -> {
-                if (detailsViewModel.getState().getStage() == PinDetailsOutputData.Stage.BACK) {
-                    selectionController.resume();
-                } else if (detailsViewModel.getState().getStage() == PinDetailsOutputData.Stage.CANCELLED
-                        && selectionViewModel.getState().getStage() != Stage.INACTIVE) {
-                    selectionController.cancel();
-                }
-            });
-            selectionViewModel.addPropertyChangeListener(event -> {
-                if (selectionViewModel.getState().getStage() == Stage.INACTIVE) {
-                    detailsController.cancel();
-                }
-            });
-            JLabel navigationStatus = new JLabel(" ");
-            // Replace these preview callbacks with the teammates' controller actions at integration.
-            HomeSidebar sidebar = new HomeSidebar(selectionController::start,
-                    () -> navigationStatus.setText("Filter Pins: Katelyn's filtering action will connect here."),
-                    () -> navigationStatus.setText("Profile: Rohail's profile action will connect here."),
-                    () -> navigationStatus.setText("Log Out: Rohail's logout action will connect here."));
-            selectionViewModel.addPropertyChangeListener(event ->
-                    sidebar.setCreationActive(selectionViewModel.getState().getStage() != Stage.INACTIVE));
-            HomeView home = new HomeView(mapPanel, controller, sidebar);
-            home.add(navigationStatus, BorderLayout.SOUTH);
-            home.add(detailsPanel, BorderLayout.EAST);
-            window.setContentPane(home);
-            window.setSize(1000, 700);
-            window.setLocationRelativeTo(null);
-            window.setVisible(true);
-        });
-    }
+  /**
+   * Starts the application on the Swing event-dispatch thread.
+   *
+   * @param args unused command-line arguments
+   */
+  public static void main(String[] args) {
+    SwingUtilities.invokeLater(() -> {
+      try {
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+      } catch (Exception exception) {
+        // A missing system look and feel is non-fatal; Swing uses its default.
+      }
+      new AppBuilder().build().setVisible(true);
+    });
+  }
 }
