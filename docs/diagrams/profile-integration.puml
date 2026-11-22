@@ -1,0 +1,18 @@
+@startuml
+title Profile Integration Contract
+rectangle "Rohail's General ProfileView (Swing JPanel)" as PV {
+  rectangle "Username + Account Dropdown" as Account
+  rectangle "Friends Slot (JPanel)" as Friends
+  rectangle "My Pins Slot (JPanel)" as Pins
+}
+rectangle "Katelyn: Friends component (JComponent)" as FriendWidget
+rectangle "Katelyn: Pins component (JComponent)" as PinsWidget
+rectangle "John: Map / Pin use cases" as Map
+Friends ..> FriendWidget : setFriendsComponent(...)
+Pins ..> PinsWidget : setPinsComponent(...)
+PinsWidget ..> Map : coordinates via shared interfaces
+note bottom of PV
+Account/session classes do not call
+Katelyn's use cases or data stores directly.
+end note
+@enduml
