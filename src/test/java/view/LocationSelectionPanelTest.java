@@ -34,11 +34,12 @@ class LocationSelectionPanelTest {
             viewer.setSize(800, 600);
             LocationSelectionPanel toolbar = (LocationSelectionPanel) ((BorderLayout) map.getLayout())
                     .getLayoutComponent(BorderLayout.NORTH);
-            JButton start = (JButton) toolbar.getComponent(0);
-            JButton confirm = (JButton) toolbar.getComponent(1);
-            JButton cancel = (JButton) toolbar.getComponent(2);
+            JButton confirm = (JButton) toolbar.getComponent(0);
+            JButton cancel = (JButton) toolbar.getComponent(1);
             assertFalse(confirm.isEnabled());
-            start.doClick(0);
+            assertFalse(toolbar.isVisible());
+            controller.start();
+            assertTrue(toolbar.isVisible());
             gesture(viewer, 400, 300, 400, 300);
             assertTrue(confirm.isEnabled());
             SelectedLocation first = selection.getState().getLocation();
@@ -58,8 +59,8 @@ class LocationSelectionPanelTest {
             cancel.doClick(0);
             assertNull(selection.getState().getLocation());
             assertTrue(((WaypointPainter<?>) viewer.getOverlayPainter()).getWaypoints().isEmpty());
-            assertTrue(start.isEnabled());
-            start.doClick(0);
+            assertFalse(toolbar.isVisible());
+            controller.start();
             assertFalse(confirm.isEnabled());
             cancel.doClick(0);
             assertEquals(1, handoffs.size());

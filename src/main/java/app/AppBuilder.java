@@ -45,6 +45,10 @@ import use_case.profile.ProfileInteractor;
 import use_case.signup.SignupInteractor;
 import view.ChangePasswordView;
 import view.HomeView;
+import view.HomeSidebar;
+import javax.swing.JLabel;
+import java.awt.BorderLayout;
+import use_case.select_location.SelectLocationOutputData.Stage;
 import view.LoginView;
 import view.ProfileView;
 import view.SignupView;
@@ -62,6 +66,17 @@ public final class AppBuilder {
   private JComponent pinsComponent;
   private String mapboxToken = System.getenv("MAPBOX_ACCESS_TOKEN");
   private Consumer<SelectedLocation> onLocationSelected = location -> { };
+  private Runnable onFilterPins;
+
+  /**
+   * Connects the shared filtering action to the sidebar.
+   * @param action callback supplied by the filtering feature
+   * @return this builder
+   */
+  public AppBuilder onFilterPins(Runnable action) {
+    onFilterPins = Objects.requireNonNull(action, "action");
+    return this;
+  }
 
   /**
    * Connects confirmed coordinates to the next creation step.
@@ -181,8 +196,25 @@ public final class AppBuilder {
         selectionController.cancel();
       }
     });
-    viewManager.add(new HomeView(mapPanel, mapController,
-        logoutController, profileController, homeModel), "home");
+    JLabel navigationStatus = new JLabel(" ");
+    HomeSidebar sidebar = new HomeSidebar(selectionController::start,
+        () -> {
+          if (onFilterPins == null) {
+            navigationStatus.setText("Filter Pins: Katelyn's filtering action will connect here.");
+          } else {
+            onFilterPins.run();
+          }
+        }, profileController::execute, logoutController::execute);
+    boolean mapUnavailable = tileFactory == null;
+    sidebar.setCreationActive(mapUnavailable);
+    selectionModel.addPropertyChangeListener(event -> sidebar.setCreationActive(
+        mapUnavailable || selectionModel.getState().getStage() != Stage.INACTIVE));
+    homeModel.addPropertyChangeListener(event -> {
+      if (homeModel.getState().getUsername() == null) { navigationStatus.setText(" "); }
+    });
+    HomeView homeView = new HomeView(mapPanel, mapController, sidebar, homeModel);
+    homeView.add(navigationStatus, BorderLayout.SOUTH);
+    viewManager.add(homeView, "home");
     viewManager.add(profileView, "profile");
     viewManager.add(new ChangePasswordView(changeController, changeModel),
         "change-password");
