@@ -20,7 +20,7 @@ import views.ViewModel;
 import views.ViewNames;
 
 import javax.swing.*;
-import java.awt.CardLayout;
+import java.awt.*;
 import java.util.ArrayList;
 
 public class Main {
@@ -59,6 +59,7 @@ public class Main {
             frame.setContentPane(cards);
             frame.setSize(800, 650);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setMinimumSize(new Dimension(450, 400));
             frame.setVisible(true);
         });
     }

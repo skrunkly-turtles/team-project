@@ -1,25 +1,4 @@
 package controller;
-/*
-OkHttpClient client = new OkHttpClient();
-
-Request request = new Request.Builder()
-        .url("https://api.example.com/weather?city=Toronto")
-        .build();
-
-try (Response response = client.newCall(request).execute()) {
-    if (response.isSuccessful()) {
-        String body = response.body().string();  // the response as text
-        System.out.println(body);
-    } else {
-        System.out.println("Request failed with code " + response.code());
-    }
-} catch (IOException e) {
-    // A network problem (no connection, timeout, ...) — handle it gracefully.
-    e.printStackTrace();
-}
-    - FROM THE COURSE NOTES
-    https://github.com/CSC207-UofT/207-course-notes/blob/main/apis-json-and-files.md#apis-json-and-files
- */
 
 import inputBoundary.LookUpBookInputBoundary;
 import inputBoundary.LookUpBookInputData;

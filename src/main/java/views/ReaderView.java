@@ -12,6 +12,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,6 +24,8 @@ public class ReaderView extends JPanel implements PropertyChangeListener {
             new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 235, 130));     // every match
     private static final Highlighter.HighlightPainter CURRENT_PAINTER =
             new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 160, 60));      // the match we are on
+    private static final Highlighter.HighlightPainter PASSAGE_PAINTER =
+            new DefaultHighlighter.DefaultHighlightPainter(new Color(190, 130, 255));      // the match we are on
 
     private final ViewModel<ReaderState> viewModel;
     private final JLabel titleLabel = new JLabel();
@@ -44,6 +47,7 @@ public class ReaderView extends JPanel implements PropertyChangeListener {
     private String shownText = "";        // the book text currently in textArea, so a search does not reload it
     private int shownMatchStart = -1;     // the match the screen last scrolled to, so other updates do not scroll again
     private boolean updatingSnippets = false;   // true while we fill snippetList ourselves, so it is not treated as a click
+    private final List<Object> searchHighlights = new ArrayList<>();   // tags of the search highlights, so passage highlights are left alone
 
     public ReaderView(ViewModel<ReaderState> viewModel, ViewModel<String> viewManagerModel) {
         this(viewModel, viewManagerModel, null, null);
@@ -136,6 +140,13 @@ public class ReaderView extends JPanel implements PropertyChangeListener {
         String bookId = viewModel.getState().getBookId();
         int start = textArea.getSelectionStart();
         int end = textArea.getSelectionEnd();
+        try {
+            Highlighter highlighter = textArea.getHighlighter();
+            highlighter.addHighlight(start, end, PASSAGE_PAINTER);
+        } catch (BadLocationException e) {
+            // The highlighting failed, likely overlap
+        }
+
         new Thread(() -> selectPassageController.execute(bookId, start, end)).start();
     }
 
@@ -186,13 +197,14 @@ public class ReaderView extends JPanel implements PropertyChangeListener {
     /** Highlights every match, with the match we are on in a different colour. */
     private void highlightMatches(ReaderState state) {
         Highlighter highlighter = textArea.getHighlighter();
-        highlighter.removeAllHighlights();
+        searchHighlights.forEach(highlighter::removeHighlight);   // only the search highlights, not the purple passage ones
+        searchHighlights.clear();
         List<Integer> starts = state.getMatchStarts();
         try {
             for (int i = 0; i < starts.size(); i++) {
                 int start = starts.get(i);
-                highlighter.addHighlight(start, start + state.getMatchLength(),
-                        i == state.getCurrentMatch() ? CURRENT_PAINTER : MATCH_PAINTER);
+                searchHighlights.add(highlighter.addHighlight(start, start + state.getMatchLength(),
+                        i == state.getCurrentMatch() ? CURRENT_PAINTER : MATCH_PAINTER));
             }
         } catch (BadLocationException e) {
             // The positions were found in this same text, so this should not happen; show what was highlighted so far.
@@ -217,6 +229,8 @@ public class ReaderView extends JPanel implements PropertyChangeListener {
             titleLabel.setText("  " + state.getTitle());
             if (!state.getText().equals(shownText)) {   // a search changes the state but not the book, so leave the text alone
                 textArea.setText(state.getText());
+                textArea.getHighlighter().removeAllHighlights();   // every highlight belongs to the previous book
+                searchHighlights.clear();
                 textArea.setCaretPosition(0);   // start at the top
                 shownText = state.getText();
             }
