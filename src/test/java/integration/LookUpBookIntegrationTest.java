@@ -1,7 +1,7 @@
 package integration;
 
 import controller.LookUpBookController;
-import entity.Book;
+import models.Book;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import presenter.LookUpBookPresenter;

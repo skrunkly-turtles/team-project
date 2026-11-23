@@ -1,6 +1,6 @@
 package presenter;
 
-import entity.Book;
+import models.Book;
 import outputBoundary.LookUpBookOutputData;
 import outputBoundary.LookUpBookReaderData;
 import org.junit.jupiter.api.Test;

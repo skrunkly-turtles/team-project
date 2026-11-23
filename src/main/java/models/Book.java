@@ -1,4 +1,4 @@
-package entity;
+package models;
 
 public class Book {
     String title;

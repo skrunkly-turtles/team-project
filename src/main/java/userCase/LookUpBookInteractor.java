@@ -1,6 +1,6 @@
 package userCase;
 
-import entity.Book;
+import models.Book;
 import inputBoundary.LookUpBookInputBoundary;
 import inputBoundary.LookUpBookInputData;
 import outputBoundary.LookUpBookOutputBoundary;

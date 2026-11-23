@@ -1,6 +1,6 @@
 package dataAccess;
 
-import entity.Book;
+import models.Book;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,6 +1,6 @@
 package userCase;
 
-import entity.Book;
+import models.Book;
 import java.util.List;
 
 public interface LookUpBookDataAccessInterface {

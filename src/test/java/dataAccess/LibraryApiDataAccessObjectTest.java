@@ -1,6 +1,6 @@
 package dataAccess;
 
-import entity.Book;
+import models.Book;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
