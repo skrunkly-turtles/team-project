@@ -1,0 +1,47 @@
+@startuml
+skinparam packageStyle rectangle
+title CSC207 Account & General Profile - Clean Architecture
+package "Frameworks & Drivers" {
+  class "Swing Views" as Views
+  class "FileUserDataAccessObject" as FileDAO
+  class "InMemoryUserDataAccessObject" as MemoryDAO
+  class "Pbkdf2PasswordHasher" as HashAdapter
+}
+package "Interface Adapters" {
+  class "Signup/Login/Logout/Profile/ChangePassword Controllers" as Controllers
+  class "Signup/Login/Logout/Profile/ChangePassword Presenters" as Presenters
+  class "ViewModels" as ViewModels
+}
+package "Use Cases" {
+  interface "Input Boundaries" as Inputs
+  class "Interactors" as Interactors
+  interface "Output Boundaries" as Outputs
+  interface "DAO Interfaces" as DAO
+  interface "PasswordHasher" as HashPort
+  interface "CurrentUserSession" as SessionPort
+}
+package "Entities" {
+  class "User" as User
+  class "UserFactory" as UserFactory
+}
+Views --> Controllers : user events
+Views --> ViewModels : observes
+Controllers --> Inputs : calls
+Interactors ..|> Inputs : implements
+Interactors --> Outputs : presents result
+Presenters ..|> Outputs : implements
+Presenters --> ViewModels : updates
+Interactors --> DAO : account operations
+FileDAO ..|> DAO : implements
+MemoryDAO ..|> DAO : implements
+Interactors --> HashPort : hashes / verifies
+HashAdapter ..|> HashPort : implements
+Interactors --> SessionPort : signed-in username
+Interactors --> User : uses
+Interactors --> UserFactory : creates
+note right of Views
+Katelyn's Friends/Pin components
+are inserted as JComponents,
+not implemented by Rohail.
+end note
+@enduml
