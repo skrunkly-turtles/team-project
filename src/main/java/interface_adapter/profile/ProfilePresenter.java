@@ -23,7 +23,8 @@ public final class ProfilePresenter implements ProfileOutputBoundary {
   /** Displays the signed-in user's general profile. */
   @Override
   public void prepareSuccessView(ProfileOutputData output) {
-    profileViewModel.setState(new ProfileState(output.getUsername(), ""));
+    profileViewModel.setState(new ProfileState(output.getUsername(), "",
+            output.getFriends(), output.getFriendRequests()));
     viewManager.show("profile");
   }
 

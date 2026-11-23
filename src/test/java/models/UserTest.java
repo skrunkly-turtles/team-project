@@ -17,7 +17,7 @@ class UserTest {
     assertEquals("alice", user.getUsername());
     assertEquals("encoded-hash", user.getPasswordHash());
     assertFalse(user.isVisible());
-    User visible = new User("bobby", "hash", new ArrayList<>(), new ArrayList<>(), true);
+    User visible = new User("bobby", "hash", new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), true);
     assertTrue(visible.isVisible());
     visible.setVisible(false);
     assertFalse(visible.isVisible());
