@@ -1,9 +1,16 @@
 package app;
 
 import controller.LookUpBookController;
+import controller.SearchInBookController;
+import controller.SelectPassageController;
+import dataAccess.InMemoryPassageDataAccessObject;
 import dataAccess.LibraryApiDataAccessObject;
 import presenter.LookUpBookPresenter;
+import presenter.SearchInBookPresenter;
+import presenter.SelectPassagePresenter;
 import userCase.LookUpBookInteractor;
+import userCase.SearchInBookInteractor;
+import userCase.SelectPassageInteractor;
 import views.LookUpBookState;
 import views.LookUpBookView;
 import views.ReaderState;
@@ -27,7 +34,19 @@ public class Main {
         LookUpBookInteractor interactor = new LookUpBookInteractor(dataAccess, presenter);
         LookUpBookController controller = new LookUpBookController(interactor);
         LookUpBookView view = new LookUpBookView(controller, viewModel);
-        ReaderView readerView = new ReaderView(readerViewModel, viewManagerModel);
+
+        // Search inside the open book. The reader already has the text, so this use case needs no data access.
+        SearchInBookPresenter searchInBookPresenter = new SearchInBookPresenter(readerViewModel);
+        SearchInBookInteractor searchInBookInteractor = new SearchInBookInteractor(searchInBookPresenter);
+        SearchInBookController searchInBookController = new SearchInBookController(searchInBookInteractor);
+
+        // Select a passage and keep it in memory.
+        InMemoryPassageDataAccessObject passageDataAccess = new InMemoryPassageDataAccessObject(dataAccess);
+        SelectPassagePresenter selectPassagePresenter = new SelectPassagePresenter(readerViewModel);
+        SelectPassageInteractor selectPassageInteractor = new SelectPassageInteractor(passageDataAccess, selectPassagePresenter);
+        SelectPassageController selectPassageController = new SelectPassageController(selectPassageInteractor);
+
+        ReaderView readerView = new ReaderView(readerViewModel, viewManagerModel, searchInBookController, selectPassageController);
 
         CardLayout cardLayout = new CardLayout();
         JPanel cards = new JPanel(cardLayout);

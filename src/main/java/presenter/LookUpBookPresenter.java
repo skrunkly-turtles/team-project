@@ -51,7 +51,7 @@ public class LookUpBookPresenter implements LookUpBookOutputBoundary {
             return;   // the reader screen is not wired up
         }
         clearError();   // removes the "Opening..." message from the search screen
-        readerViewModel.setState(new ReaderState(readerData.getTitle(), readerData.getText()));
+        readerViewModel.setState(new ReaderState(readerData.getBookId(), readerData.getTitle(), readerData.getText()));
         viewManagerModel.setState(ViewNames.READER_VIEW);
     }
 

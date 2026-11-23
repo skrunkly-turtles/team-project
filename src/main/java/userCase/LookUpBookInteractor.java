@@ -70,6 +70,6 @@ public class LookUpBookInteractor implements LookUpBookInputBoundary {
             return;
         }
 
-        presenter.prepareReaderView(new LookUpBookReaderData(book.getTitle(), book.getText()));
+        presenter.prepareReaderView(new LookUpBookReaderData(bookId, book.getTitle(), book.getText()));
     }
 }
