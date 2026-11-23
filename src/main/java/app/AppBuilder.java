@@ -8,6 +8,13 @@ import interface_adapter.change_password.ChangePasswordController;
 import interface_adapter.change_password.ChangePasswordPresenter;
 import interface_adapter.change_password.ChangePasswordViewModel;
 import interface_adapter.home.HomeViewModel;
+import interface_adapter.map.MapController;
+import interface_adapter.map.MapPresenter;
+import interface_adapter.map.MapViewModel;
+import use_case.display_map.DisplayMapInteractor;
+import org.jxmapviewer.viewer.DefaultTileFactory;
+import view.MapPanel;
+import view.MapboxTileFactoryInfo;
 import interface_adapter.login.LoginController;
 import interface_adapter.login.LoginPresenter;
 import interface_adapter.login.LoginViewModel;
@@ -40,13 +47,24 @@ import view.ViewManager;
 /**
  * Composition root: wires use cases to their concrete adapters and Swing screens.
  *
- * <p>The map, pin, and friends code belongs to other teammates and is injected as
- * optional reusable components rather than being implemented in this application.
+ * <p>Assembles the shared account and map flows. Independent profile pin/friend
+ * components remain injectable.
  */
 public final class AppBuilder {
   private Path accountFile = Path.of("data", "users.json");
   private JComponent friendsComponent;
   private JComponent pinsComponent;
+  private String mapboxToken = System.getenv("MAPBOX_ACCESS_TOKEN");
+
+  /**
+   * Configures map imagery; null displays local setup instructions.
+   * @param token public Mapbox token, or null
+   * @return this builder
+   */
+  public AppBuilder mapboxToken(String token) {
+    mapboxToken = token;
+    return this;
+  }
 
   /**
    * Overrides the local account path, useful for integration tests or demonstrations.
@@ -81,8 +99,11 @@ public final class AppBuilder {
     return this;
   }
 
-  /** Builds a runnable account and general-profile application. */
-  public JFrame build() {
+  /**
+   * Assembles the account screens and map without creating a native window.
+   * @return the assembled navigation component
+   */
+  public ViewManager buildContent() {
     JsonUserDataAccessObject accounts = new JsonUserDataAccessObject(accountFile);
     InMemoryCurrentUserSession session = new InMemoryCurrentUserSession();
     Pbkdf2PasswordHasher hasher = new Pbkdf2PasswordHasher();
@@ -124,14 +145,33 @@ public final class AppBuilder {
     ViewManager viewManager = new ViewManager(navigator);
     viewManager.add(new LoginView(loginController, loginModel), "login");
     viewManager.add(new SignupView(signupController, signupModel), "signup");
-    viewManager.add(new HomeView(logoutController, profileController, homeModel), "home");
+    MapViewModel mapModel = new MapViewModel();
+    MapController mapController = new MapController(
+        new DisplayMapInteractor(new MapPresenter(mapModel)));
+    DefaultTileFactory tileFactory = null;
+    if (mapboxToken != null && !mapboxToken.isBlank()) {
+      tileFactory = new DefaultTileFactory(new MapboxTileFactoryInfo(mapboxToken));
+      tileFactory.setThreadPoolSize(4);
+    }
+    MapPanel mapPanel = new MapPanel(tileFactory, mapModel);
+    viewManager.add(new HomeView(mapPanel, mapController,
+        logoutController, profileController, homeModel), "home");
     viewManager.add(profileView, "profile");
     viewManager.add(new ChangePasswordView(changeController, changeModel),
         "change-password");
 
+    viewManager.setPreferredSize(new Dimension(1000, 700));
+    return viewManager;
+  }
+
+  /**
+   * Builds the desktop window containing the account and map flows.
+   * @return configured application window
+   */
+  public JFrame build() {
     JFrame frame = new JFrame("Passage Map | Accounts and Profile");
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    frame.setContentPane(viewManager);
+    frame.setContentPane(buildContent());
     frame.setMinimumSize(new Dimension(780, 490));
     frame.pack();
     frame.setLocationRelativeTo(null);

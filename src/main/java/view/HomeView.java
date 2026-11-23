@@ -3,34 +3,43 @@ package view;
 import interface_adapter.home.HomeState;
 import interface_adapter.home.HomeViewModel;
 import interface_adapter.logout.LogoutController;
+import interface_adapter.map.MapController;
 import interface_adapter.profile.ProfileController;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-/**
- * Temporary authenticated home screen until John's interactive map is integrated.
- *
- * <p>This view contains no friend or pin management implementation.
- */
-public final class HomeView extends JPanel {
-  private final JLabel heading = new JLabel("Welcome", SwingConstants.CENTER);
+/** Displays the map and authenticated account navigation. */
+public class HomeView extends JPanel {
+  /**
+   * Creates the reusable map screen.
+   * @param mapPanel configured map component
+   * @param controller input adapter for map initialization
+   */
+  public HomeView(MapPanel mapPanel, MapController controller) {
+    super(new BorderLayout(8, 8));
+    add(mapPanel, BorderLayout.CENTER);
+    controller.displayMap();
+  }
 
-  /** Constructs navigation from the authenticated home screen to the profile. */
-  public HomeView(LogoutController logoutController, ProfileController profileController,
+  /**
+   * Adds account actions to the shared map screen.
+   * @param mapPanel configured map component
+   * @param controller map initialization controller
+   * @param logoutController authenticated logout action
+   * @param profileController profile navigation action
+   * @param homeViewModel authenticated user's display state
+   */
+  public HomeView(MapPanel mapPanel, MapController controller,
+      LogoutController logoutController, ProfileController profileController,
       HomeViewModel homeViewModel) {
-    setLayout(new BorderLayout(16, 16));
-    setBorder(BorderFactory.createEmptyBorder(32, 35, 32, 35));
+    this(mapPanel, controller);
+    JLabel heading = new JLabel("Welcome", SwingConstants.CENTER);
     heading.setFont(heading.getFont().deriveFont(22f));
     add(heading, BorderLayout.NORTH);
-    JLabel placeholder = new JLabel(
-        "John's interactive map will replace this home-screen placeholder.",
-        SwingConstants.CENTER);
-    add(placeholder, BorderLayout.CENTER);
     JPanel actions = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 0));
     JButton profile = new JButton("Open My Profile");
     JButton logout = new JButton("Log Out");
@@ -41,8 +50,7 @@ public final class HomeView extends JPanel {
     add(actions, BorderLayout.SOUTH);
     homeViewModel.addPropertyChangeListener(event -> {
       HomeState state = (HomeState) event.getNewValue();
-      heading.setText(state.getUsername() == null ? "Welcome"
-          : "Welcome, " + state.getUsername());
+      heading.setText(state.getUsername() == null ? "Welcome" : "Welcome, " + state.getUsername());
     });
   }
 }
