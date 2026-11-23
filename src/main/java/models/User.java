@@ -16,6 +16,7 @@ public final class User {
   private final String passwordHash;
   private final ArrayList<Pin> pins;
   private final ArrayList<String> friends;
+  private final ArrayList<String> friendRequests;
   private boolean visible;
 
   /**
@@ -28,11 +29,12 @@ public final class User {
    * @param visible existing profile visibility setting
    */
   public User(String username, String passwordHash, ArrayList<Pin> pins,
-      ArrayList<String> friends, boolean visible) {
+      ArrayList<String> friends, ArrayList<String> friendRequests, boolean visible) {
     this.username = Objects.requireNonNull(username, "username");
     this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash");
     this.pins = new ArrayList<>(Objects.requireNonNull(pins, "pins"));
     this.friends = new ArrayList<>(Objects.requireNonNull(friends, "friends"));
+    this.friendRequests = new ArrayList<>(Objects.requireNonNull(friendRequests, "pendingFriends"));
     this.visible = visible;
   }
 
@@ -46,7 +48,7 @@ public final class User {
    */
   public User(String username, String passwordHash, ArrayList<Pin> pins,
       ArrayList<String> friends) {
-    this(username, passwordHash, pins, friends, false);
+    this(username, passwordHash, pins, friends, new ArrayList<>(), false);
   }
 
   /** Returns the user's unique name. */
@@ -69,6 +71,21 @@ public final class User {
     return new ArrayList<>(friends);
   }
 
+  /** Returns a defensive copy of the pendingFriends list. */
+  public List<String> getFriendRequests() {
+    return new ArrayList<>(friendRequests);
+  }
+
+  /** Records an incoming request, ignoring duplicates. */
+  public void receiveFriendRequest(String fromUsername) {
+    if (fromUsername.isEmpty() || username.equals(fromUsername)) {
+      throw new IllegalArgumentException("Illegal username input");
+    }
+    if (!friendRequests.contains(fromUsername)) {
+      friendRequests.add(fromUsername);
+    }
+  }
+
   /** Returns the existing profile visibility setting. */
   public boolean isVisible() {
     return visible;
@@ -81,5 +98,21 @@ public final class User {
    */
   public void setVisible(boolean visible) {
     this.visible = visible;
+  }
+
+  /**
+   * Adds another User as a friend, if they do not exist as a friend already
+   *
+   * @param friendUsername is the String name of the other User
+   */
+  public void addFriend(String friendUsername) {
+    if (friendUsername.isEmpty() || username.equals(friendUsername)) {
+      throw new IllegalArgumentException("Illegal username input");
+    }
+    if(!friends.contains(friendUsername)) {
+      friends.add(friendUsername);
+    } else {
+      throw new IllegalArgumentException("Friend already exists");
+    }
   }
 }
