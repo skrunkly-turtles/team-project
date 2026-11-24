@@ -1,6 +1,10 @@
 package app;
 
 import data_access.JsonUserDataAccessObject;
+import dataAccess.LibraryApiDataAccessObject;
+import userCase.LookUpBookDataAccessInterface;
+import java.util.function.Supplier;
+import view.BookSelectionPanel;
 import data_access.InMemoryCurrentUserSession;
 import data_access.Pbkdf2PasswordHasher;
 import interface_adapter.ViewManagerModel;
@@ -76,6 +80,16 @@ public final class AppBuilder {
   private String mapboxToken = System.getenv("MAPBOX_ACCESS_TOKEN");
   private Consumer<SelectedLocation> onLocationSelected;
   private Runnable onFilterPins;
+  private Supplier<LookUpBookDataAccessInterface> libraryFactory = LibraryApiDataAccessObject::new;
+
+  /** Supplies the library provider, allowing offline integration checks.
+   * @param factory creates an independent library session
+   * @return this builder
+   */
+  public AppBuilder libraryFactory(Supplier<LookUpBookDataAccessInterface> factory) {
+    libraryFactory = Objects.requireNonNull(factory, "factory");
+    return this;
+  }
 
   /**
    * Connects the shared filtering action to the sidebar.
@@ -204,15 +218,20 @@ public final class AppBuilder {
         new PinDetailsInteractor(new PinDetailsPresenter(detailsModel)));
     PinDetailsPanel detailsPanel = new PinDetailsPanel(detailsController, detailsModel);
     LocationSelectionViewModel selectionModel = new LocationSelectionViewModel();
+    BookSelectionPanel[] bookStep = new BookSelectionPanel[1];
     LocationSelectionController selectionController = new LocationSelectionController(
         new SelectLocationInteractor(new LocationSelectionPresenter(selectionModel, location -> {
           if (onLocationSelected == null) {
-            // Preview until the real passage step calls into the final details screen.
-            detailsController.open(location);
+            bookStep[0].open(location);
+            navigator.setState("pin-book");
           } else {
             onLocationSelected.accept(location);
           }
         })));
+    bookStep[0] = new BookSelectionPanel(libraryFactory,
+        () -> { selectionController.resume(); navigator.setState("home"); },
+        () -> { selectionController.cancel(); navigator.setState("home"); });
+    viewManager.add(bookStep[0], "pin-book");
     mapPanel.enableLocationSelection(selectionController, selectionModel);
     detailsModel.addPropertyChangeListener(event -> {
       if (detailsModel.getState().getStage() == PinDetailsOutputData.Stage.BACK) {
@@ -225,6 +244,7 @@ public final class AppBuilder {
     selectionModel.addPropertyChangeListener(event -> {
       if (selectionModel.getState().getStage() == Stage.INACTIVE) {
         detailsController.cancel();
+        bookStep[0].reset();
       }
     });
     homeModel.addPropertyChangeListener(event -> {

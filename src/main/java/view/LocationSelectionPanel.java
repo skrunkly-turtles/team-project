@@ -59,7 +59,7 @@ public class LocationSelectionPanel extends JPanel {
             if (!state.getError().isEmpty()) {
                 status.setText(state.getError());
             } else if (state.getStage() == Stage.CONFIRMED) {
-                status.setText("Location ready; book selection connection pending.");
+                status.setText("Location confirmed.");
             } else if (location != null) {
                 status.setText(String.format(Locale.ROOT, "Selected: %.5f, %.5f",
                         location.getLatitude(), location.getLongitude()));

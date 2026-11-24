@@ -86,4 +86,25 @@ class PinDetailsInteractorTest {
         assertNull(results.get(3).getDraft().getVisibility());
         assertNull(results.get(3).getDraft().getImagePath());
     }
+    /** A completed library result survives details edits and Back, but never cancellation. */
+    @Test
+    void keepsSourceUntilDraftIsDiscarded() {
+        List<PinDetailsOutputData> results = new ArrayList<>();
+        PinDetailsInteractor input = new PinDetailsInteractor(results::add);
+        SelectedPassage passage = new SelectedPassage(" Title ", null, " passage text ");
+        assertEquals("Title", passage.getBookTitle());
+        assertEquals("", passage.getAuthor());
+        assertEquals("passage text", passage.getText());
+        assertThrows(IllegalArgumentException.class, () -> new SelectedPassage("", "author", "text"));
+        assertThrows(IllegalArgumentException.class, () -> new SelectedPassage("title", "author", " "));
+        input.open(new SelectedLocation(1, 2), passage);
+        input.update("thoughts", null, Visibility.PRIVATE);
+        input.back();
+        input.open(new SelectedLocation(3, 4));
+        assertSame(passage, results.get(results.size() - 1).getDraft().getPassage());
+        input.cancel();
+        input.open(new SelectedLocation(5, 6));
+        assertNull(results.get(results.size() - 1).getDraft().getPassage());
+    }
+
 }

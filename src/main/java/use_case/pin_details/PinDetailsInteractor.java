@@ -22,8 +22,17 @@ public class PinDetailsInteractor implements PinDetailsInputBoundary {
      */
     @Override
     public void open(SelectedLocation location) {
+        open(location, draft == null ? null : draft.getPassage());
+    }
+
+    /** Receives the completed library selection and retains the optional draft fields.
+     * @param location latest confirmed location
+     * @param passage immutable book/passage selection, or null before completion
+     */
+    @Override
+    public void open(SelectedLocation location, SelectedPassage passage) {
         Objects.requireNonNull(location, "Choose a location before opening details.");
-        draft = new PinCreationDraft(location, draft == null ? "" : draft.getThoughts(),
+        draft = new PinCreationDraft(location, passage, draft == null ? "" : draft.getThoughts(),
                 draft == null ? null : draft.getImagePath(), draft == null ? null : draft.getVisibility());
         stage = Stage.EDITING;
         output.present(new PinDetailsOutputData(draft, stage));
@@ -38,7 +47,7 @@ public class PinDetailsInteractor implements PinDetailsInputBoundary {
     @Override
     public void update(String thoughts, String imagePath, PinCreationDraft.Visibility visibility) {
         if (stage != Stage.EDITING) { return; }
-        draft = new PinCreationDraft(draft.getLocation(), thoughts == null ? "" : thoughts,
+        draft = new PinCreationDraft(draft.getLocation(), draft.getPassage(), thoughts == null ? "" : thoughts,
                 imagePath == null || imagePath.isBlank() ? null : imagePath, visibility);
         output.present(new PinDetailsOutputData(draft, stage));
     }

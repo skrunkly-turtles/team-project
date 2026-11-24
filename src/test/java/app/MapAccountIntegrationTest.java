@@ -101,9 +101,9 @@ class MapAccountIntegrationTest {
     });
   }
 
-  /** Details survive Back but cancellation and logout clear all form entries. */
+  /** The default next step is library search; Back retains coordinates and Cancel clears them. */
   @Test
-  void detailsLifecycleIsBoundToTheAuthenticatedSession() throws Exception {
+  void locationOpensLibraryAndCancelStartsFresh() throws Exception {
     SwingUtilities.invokeAndWait(() -> {
       ViewManager screens = new AppBuilder().accountFile(directory.resolve("details-users.json"))
           .mapboxToken("pk.test").buildContent();
@@ -120,47 +120,36 @@ class MapAccountIntegrationTest {
       click(login, "Log in");
       Container home = visibleScreen(screens);
       JXMapViewer viewer = fields(home, JXMapViewer.class).get(0);
-      PinDetailsPanel details = fields(home, PinDetailsPanel.class).get(0);
-      JTextArea thoughts = fields(details, JTextArea.class).get(0);
-      JRadioButton audience = fields(details, JRadioButton.class).get(0);
       click(home, "Add Pin");
       selectMapCenter(viewer);
       click(home, "Continue");
-      assertTrue(details.isVisible());
-      thoughts.setText("Keep when going Back");
-      audience.doClick(0);
-      click(details, "Back");
-      assertFalse(details.isVisible());
+      Container library = visibleScreen(screens);
+      assertInstanceOf(view.BookSelectionPanel.class, library);
+      assertEquals(1, java.util.Arrays.stream(screens.getComponents())
+          .filter(Component::isVisible).count(), "Only the active card may remain visible");
+      assertFalse(home.isVisible(), "The map must be hidden behind the book screen");
+      assertEquals(1, fields(library, views.LookUpBookView.class).size());
+      assertEquals(1, ((WaypointPainter<?>) viewer.getOverlayPainter()).getWaypoints().size());
+      JTextField query = fields(library, JTextField.class).get(0);
+      query.setText("Keep this search");
+      click(library, "Back to location");
+      assertSame(home, visibleScreen(screens));
+      assertTrue(fields(home, JButton.class).stream()
+          .anyMatch(button -> "Continue".equals(button.getText()) && button.isEnabled()));
       click(home, "Continue");
-      assertTrue(details.isVisible());
-      assertEquals("Keep when going Back", thoughts.getText());
-      assertTrue(audience.isSelected());
-      click(details, "Cancel");
-      assertFalse(details.isVisible());
-      assertEquals("", thoughts.getText());
-      assertFalse(audience.isSelected());
+      assertEquals("Keep this search", query.getText());
+      click(library, "Cancel Add Pin");
+      assertSame(home, visibleScreen(screens));
+      assertTrue(((WaypointPainter<?>) viewer.getOverlayPainter()).getWaypoints().isEmpty());
       click(home, "Add Pin");
       selectMapCenter(viewer);
       click(home, "Continue");
-      thoughts.setText("Clear on logout");
-      audience.doClick(0);
+      assertEquals("", fields(library, JTextField.class).get(0).getText());
+      click(library, "Back to location");
       click(home, "Log Out");
       assertInstanceOf(LoginView.class, visibleScreen(screens));
-      assertFalse(details.isVisible());
-      assertEquals("", thoughts.getText());
-      assertFalse(audience.isSelected());
+      assertTrue(fields(library, views.LookUpBookView.class).isEmpty());
       assertTrue(((WaypointPainter<?>) viewer.getOverlayPainter()).getWaypoints().isEmpty());
-      login = visibleScreen(screens);
-      fields(login, JPasswordField.class).get(0).setText("testpassword123");
-      click(login, "Log in");
-      click(home, "Add Pin");
-      selectMapCenter(viewer);
-      click(home, "Continue");
-      assertTrue(details.isVisible());
-      assertEquals("", thoughts.getText());
-      assertFalse(audience.isSelected());
-      assertFalse(fields(details, JButton.class).stream()
-          .filter(button -> "Create Pin".equals(button.getText())).findFirst().orElseThrow().isEnabled());
     });
   }
 
