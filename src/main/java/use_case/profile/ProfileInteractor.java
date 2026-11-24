@@ -1,6 +1,7 @@
 package use_case.profile;
 
 import use_case.session.CurrentUserSession;
+import models.User;
 
 /** Selects the authenticated profile without exposing sensitive stored information. */
 public final class ProfileInteractor implements ProfileInputBoundary {
@@ -20,10 +21,11 @@ public final class ProfileInteractor implements ProfileInputBoundary {
   @Override
   public void execute() {
     String username = session.getCurrentUsername();
-    if (username == null || !accounts.existsByName(username)) {
+    User user = username == null ? null : accounts.get(username);
+    if (user == null) {
       presenter.prepareFailView("Please sign in to view your profile.");
       return;
     }
-    presenter.prepareSuccessView(new ProfileOutputData(username));
+    presenter.prepareSuccessView(new ProfileOutputData(username, user.getFriends(), user.getFriendRequests()));
   }
 }

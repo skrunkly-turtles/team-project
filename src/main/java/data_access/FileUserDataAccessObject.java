@@ -83,11 +83,12 @@ public final class FileUserDataAccessObject implements SignupUserDataAccessInter
     }
     Map<String, User> proposed = new HashMap<>(users);
     proposed.put(username, new User(username, hash, new ArrayList<>(original.getPins()),
-        new ArrayList<>(original.getFriends()), original.isVisible()));
+        new ArrayList<>(original.getFriends()), new ArrayList<>(original.getFriendRequests()), original.isVisible()));
     persist(proposed);
     users = proposed;
   }
 
+  /** Loads account records without creating a file when the store is absent. */
   /** Loads account records without creating a file when the store is absent. */
   private Map<String, User> load() {
     Map<String, User> result = new HashMap<>();
@@ -106,21 +107,29 @@ public final class FileUserDataAccessObject implements SignupUserDataAccessInter
         if (hash == null || hash.isBlank()) {
           throw new IllegalStateException("Missing password hash for: " + username);
         }
-        ArrayList<String> friends = new ArrayList<>();
-        String savedFriends = properties.getProperty("friends." + username, "");
-        if (!savedFriends.isEmpty()) {
-          for (String friend : savedFriends.split(",")) {
-            friends.add(friend);
-          }
-        }
+        ArrayList<String> friends = readList(properties, "friends." + username);
+        ArrayList<String> requests = readList(properties, "requests." + username);
         boolean visible = Boolean.parseBoolean(
-            properties.getProperty("visible." + username, "false"));
-        result.put(username, new User(username, hash, new ArrayList<>(), friends, visible));
+                properties.getProperty("visible." + username, "false"));
+        result.put(username, new User(username, hash, new ArrayList<>(), friends,
+                requests, visible));
       }
     } catch (IOException exception) {
       throw new IllegalStateException("Cannot read account file: " + file, exception);
     }
     return result;
+  }
+
+  /** Reads a comma-separated list property, treating a missing key as empty. */
+  private static ArrayList<String> readList(Properties properties, String key) {
+    ArrayList<String> values = new ArrayList<>();
+    String saved = properties.getProperty(key, "");
+    if (!saved.isEmpty()) {
+      for (String value : saved.split(",")) {
+        values.add(value);
+      }
+    }
+    return values;
   }
 
   /** Writes a replacement snapshot to a temporary file before committing it. */
@@ -131,6 +140,7 @@ public final class FileUserDataAccessObject implements SignupUserDataAccessInter
       String username = user.getUsername();
       properties.setProperty("hash." + username, user.getPasswordHash());
       properties.setProperty("friends." + username, String.join(",", user.getFriends()));
+      properties.setProperty("requests." + username, String.join(",", user.getFriendRequests()));
       properties.setProperty("visible." + username, Boolean.toString(user.isVisible()));
     }
     Path directory = file.getParent();
@@ -163,7 +173,7 @@ public final class FileUserDataAccessObject implements SignupUserDataAccessInter
   /** Returns an independent entity so mutations cannot bypass persistence. */
   private static User copy(User user) {
     return new User(user.getUsername(), user.getPasswordHash(),
-        new ArrayList<>(user.getPins()), new ArrayList<>(user.getFriends()),
+        new ArrayList<>(user.getPins()), new ArrayList<>(user.getFriends()), new ArrayList<>(user.getFriendRequests()),
         user.isVisible());
   }
 }

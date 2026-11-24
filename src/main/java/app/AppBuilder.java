@@ -38,6 +38,8 @@ import interface_adapter.profile.ProfileViewModel;
 import interface_adapter.signup.SignupController;
 import interface_adapter.signup.SignupPresenter;
 import interface_adapter.signup.SignupViewModel;
+import interface_adapter.add_friend.AddFriendController;
+import interface_adapter.add_friend.AddFriendPresenter;
 import java.awt.Dimension;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -49,6 +51,7 @@ import use_case.login.LoginInteractor;
 import use_case.logout.LogoutInteractor;
 import use_case.profile.ProfileInteractor;
 import use_case.signup.SignupInteractor;
+import use_case.add_friend.AddFriendInteractor;
 import view.ChangePasswordView;
 import view.HomeView;
 import view.HomeSidebar;
@@ -172,8 +175,11 @@ public final class AppBuilder {
     ChangePasswordController changeController = new ChangePasswordController(
         new ChangePasswordInteractor(accounts, changePresenter, hasher, session),
         navigator);
+    AddFriendPresenter addFriendPresenter = new AddFriendPresenter(profileModel);
+    AddFriendController addFriendController = new AddFriendController(
+            new AddFriendInteractor(accounts, addFriendPresenter, session));
 
-    ProfileView profileView = new ProfileView(profileController, logoutController, profileModel);
+    ProfileView profileView = new ProfileView(profileController, logoutController, profileModel, addFriendController);
     if (friendsComponent != null) {
       profileView.setFriendsComponent(friendsComponent);
     }

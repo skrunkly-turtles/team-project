@@ -4,6 +4,10 @@ import interface_adapter.logout.LogoutController;
 import interface_adapter.profile.ProfileController;
 import interface_adapter.profile.ProfileState;
 import interface_adapter.profile.ProfileViewModel;
+import interface_adapter.add_friend.AddFriendController;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
+import javax.swing.JScrollPane;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -34,6 +38,8 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
   private final JLabel statusLabel = new JLabel(" ", SwingConstants.CENTER);
   private final JPanel friendsSlot = new JPanel(new BorderLayout());
   private final JPanel pinsSlot = new JPanel(new BorderLayout());
+  private final AddFriendController addFriendController;
+  private final DefaultListModel<String> friendsModel = new DefaultListModel<>();
   private final JCheckBox confirmLogout = new JCheckBox("Ask before logging out", true);
 
   /**
@@ -44,9 +50,10 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
    * @param profileViewModel observable non-sensitive account display state
    */
   public ProfileView(ProfileController controller, LogoutController logoutController,
-      ProfileViewModel profileViewModel) {
+      ProfileViewModel profileViewModel, AddFriendController addFriendController) {
     this.controller = controller;
     this.logoutController = logoutController;
+    this.addFriendController = addFriendController;
     profileViewModel.addPropertyChangeListener(this);
     setLayout(new BorderLayout(16, 16));
     setBorder(BorderFactory.createEmptyBorder(24, 30, 24, 30));
@@ -98,14 +105,34 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
     JPanel features = new JPanel(new GridLayout(1, 2, 16, 0));
     friendsSlot.setBorder(BorderFactory.createTitledBorder("Friends"));
     pinsSlot.setBorder(BorderFactory.createTitledBorder("My Pins"));
-    setFriendsComponent(new JLabel("Katelyn's friends component goes here",
-        SwingConstants.CENTER));
+    setFriendsComponent(makeFriendsPanel());;
     setPinsComponent(new JLabel("Katelyn's saved-pins component goes here",
         SwingConstants.CENTER));
     features.add(friendsSlot);
     features.add(pinsSlot);
     content.add(features, BorderLayout.CENTER);
     return content;
+  }
+
+  /** Builds the friends list with an add button. */
+  private JPanel makeFriendsPanel() {
+    JPanel panel = new JPanel(new BorderLayout(8, 8));
+    JButton add = new JButton("Add friend");
+    add.addActionListener(event -> openAddFriend());
+    JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    buttonRow.add(add);
+    panel.add(buttonRow, BorderLayout.NORTH);
+    panel.add(new JScrollPane(new JList<>(friendsModel)), BorderLayout.CENTER);
+    return panel;
+  }
+
+  /** Asks for a username in a modal dialog and delegates to the controller. */
+  private void openAddFriend() {
+    String name = JOptionPane.showInputDialog(this, "Friend's username:", "Add friend",
+            JOptionPane.PLAIN_MESSAGE);
+    if (name != null) {
+      addFriendController.execute(name.trim());
+    }
   }
 
   /**
@@ -158,5 +185,9 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
     ProfileState state = (ProfileState) event.getNewValue();
     usernameLabel.setText(state.getUsername() == null ? "" : "@" + state.getUsername());
     statusLabel.setText(state.getMessage().isEmpty() ? " " : state.getMessage());
+    friendsModel.clear();
+    for (String friend : state.getFriends()) {
+      friendsModel.addElement(friend);
+    }
   }
 }
