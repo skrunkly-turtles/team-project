@@ -20,6 +20,12 @@ import interface_adapter.map.MapViewModel;
 import use_case.display_map.DisplayMapInteractor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
 import view.MapPanel;
+import view.PinDetailsPanel;
+import interface_adapter.map.PinDetailsController;
+import interface_adapter.map.PinDetailsPresenter;
+import interface_adapter.map.PinDetailsViewModel;
+import use_case.pin_details.PinDetailsInteractor;
+import use_case.pin_details.PinDetailsOutputData;
 import view.MapboxTileFactoryInfo;
 import interface_adapter.login.LoginController;
 import interface_adapter.login.LoginPresenter;
@@ -32,6 +38,8 @@ import interface_adapter.profile.ProfileViewModel;
 import interface_adapter.signup.SignupController;
 import interface_adapter.signup.SignupPresenter;
 import interface_adapter.signup.SignupViewModel;
+import interface_adapter.add_friend.AddFriendController;
+import interface_adapter.add_friend.AddFriendPresenter;
 import java.awt.Dimension;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -43,6 +51,7 @@ import use_case.login.LoginInteractor;
 import use_case.logout.LogoutInteractor;
 import use_case.profile.ProfileInteractor;
 import use_case.signup.SignupInteractor;
+import use_case.add_friend.AddFriendInteractor;
 import view.ChangePasswordView;
 import view.HomeView;
 import view.HomeSidebar;
@@ -65,7 +74,7 @@ public final class AppBuilder {
   private JComponent friendsComponent;
   private JComponent pinsComponent;
   private String mapboxToken = System.getenv("MAPBOX_ACCESS_TOKEN");
-  private Consumer<SelectedLocation> onLocationSelected = location -> { };
+  private Consumer<SelectedLocation> onLocationSelected;
   private Runnable onFilterPins;
 
   /**
@@ -166,8 +175,11 @@ public final class AppBuilder {
     ChangePasswordController changeController = new ChangePasswordController(
         new ChangePasswordInteractor(accounts, changePresenter, hasher, session),
         navigator);
+    AddFriendPresenter addFriendPresenter = new AddFriendPresenter(profileModel);
+    AddFriendController addFriendController = new AddFriendController(
+            new AddFriendInteractor(accounts, addFriendPresenter, session));
 
-    ProfileView profileView = new ProfileView(profileController, logoutController, profileModel);
+    ProfileView profileView = new ProfileView(profileController, logoutController, profileModel, addFriendController);
     if (friendsComponent != null) {
       profileView.setFriendsComponent(friendsComponent);
     }
@@ -186,11 +198,35 @@ public final class AppBuilder {
       tileFactory.setThreadPoolSize(4);
     }
     MapPanel mapPanel = new MapPanel(tileFactory, mapModel);
-    // Location-selection integration created with AI assistance.
+    // Details/account integration created with AI assistance.
+    PinDetailsViewModel detailsModel = new PinDetailsViewModel();
+    PinDetailsController detailsController = new PinDetailsController(
+        new PinDetailsInteractor(new PinDetailsPresenter(detailsModel)));
+    PinDetailsPanel detailsPanel = new PinDetailsPanel(detailsController, detailsModel);
     LocationSelectionViewModel selectionModel = new LocationSelectionViewModel();
     LocationSelectionController selectionController = new LocationSelectionController(
-        new SelectLocationInteractor(new LocationSelectionPresenter(selectionModel, onLocationSelected)));
+        new SelectLocationInteractor(new LocationSelectionPresenter(selectionModel, location -> {
+          if (onLocationSelected == null) {
+            // Preview until the real passage step calls into the final details screen.
+            detailsController.open(location);
+          } else {
+            onLocationSelected.accept(location);
+          }
+        })));
     mapPanel.enableLocationSelection(selectionController, selectionModel);
+    detailsModel.addPropertyChangeListener(event -> {
+      if (detailsModel.getState().getStage() == PinDetailsOutputData.Stage.BACK) {
+        selectionController.resume();
+      } else if (detailsModel.getState().getStage() == PinDetailsOutputData.Stage.CANCELLED
+          && selectionModel.getState().getStage() != Stage.INACTIVE) {
+        selectionController.cancel();
+      }
+    });
+    selectionModel.addPropertyChangeListener(event -> {
+      if (selectionModel.getState().getStage() == Stage.INACTIVE) {
+        detailsController.cancel();
+      }
+    });
     homeModel.addPropertyChangeListener(event -> {
       if (homeModel.getState().getUsername() == null) {
         selectionController.cancel();
@@ -214,6 +250,7 @@ public final class AppBuilder {
     });
     HomeView homeView = new HomeView(mapPanel, mapController, sidebar, homeModel);
     homeView.add(navigationStatus, BorderLayout.SOUTH);
+    homeView.add(detailsPanel, BorderLayout.EAST);
     viewManager.add(homeView, "home");
     viewManager.add(profileView, "profile");
     viewManager.add(new ChangePasswordView(changeController, changeModel),

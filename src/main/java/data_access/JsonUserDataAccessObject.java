@@ -23,11 +23,12 @@ import use_case.change_password.ChangePasswordUserDataAccessInterface;
 import use_case.login.LoginUserDataAccessInterface;
 import use_case.profile.ProfileUserDataAccessInterface;
 import use_case.signup.SignupUserDataAccessInterface;
+import use_case.add_friend.AddFriendUserDataAccessInterface;
 
 /** Stores local user accounts, friend lists, and pins in a JSON file. */
 public final class JsonUserDataAccessObject implements SignupUserDataAccessInterface,
     LoginUserDataAccessInterface, ChangePasswordUserDataAccessInterface,
-    ProfileUserDataAccessInterface {
+    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final Type PIN_LIST_TYPE = new TypeToken<ArrayList<Pin>>() { }.getType();
 
@@ -72,7 +73,7 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
     Objects.requireNonNull(encodedHash, "encodedHash");
     User current = requireUser(username);
     saveReplacement(new User(username, encodedHash, copyPins(current.getPins()),
-        new ArrayList<>(current.getFriends()), current.isVisible()));
+        new ArrayList<>(current.getFriends()), new ArrayList<>(current.getFriendRequests()), current.isVisible()));
   }
 
   /** Persists a complete updated friend list for an existing account. */
@@ -83,7 +84,29 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
     }
     User current = requireUser(username);
     saveReplacement(new User(username, current.getPasswordHash(), copyPins(current.getPins()),
-        new ArrayList<>(friends), current.isVisible()));
+        new ArrayList<>(friends), new ArrayList<>(current.getFriendRequests()), current.isVisible()));
+  }
+
+  /** Records a pending request on the recipient's account and writes the file before committing. */
+  @Override
+  public synchronized void sendFriendRequest(String username, String friendUsername) {
+    User sender = requireUser(username);
+    User recipient = copy(requireUser(friendUsername));
+    if (sender.getFriends().contains(friendUsername)
+            || recipient.getFriends().contains(username)) {
+      throw new IllegalStateException("Users are already friends.");
+    }
+    if (recipient.getFriendRequests().contains(username)) {
+      throw new IllegalStateException("Request already pending.");
+    }
+    if (sender.getFriendRequests().contains(friendUsername)) {
+      throw new IllegalStateException("The other user already sent you a request.");
+    }
+    recipient.receiveFriendRequest(username);
+    Map<String, User> proposed = new HashMap<>(users);
+    proposed.put(friendUsername, recipient);
+    persist(proposed);
+    users = proposed;
   }
 
   /** Persists a complete updated pin list for an existing account. */
@@ -94,14 +117,14 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
     }
     User current = requireUser(username);
     saveReplacement(new User(username, current.getPasswordHash(), copyPins(pins),
-        new ArrayList<>(current.getFriends()), current.isVisible()));
+        new ArrayList<>(current.getFriends()), new ArrayList<>(current.getFriendRequests()), current.isVisible()));
   }
 
   /** Persists a change to the user's visibility preference. */
   public synchronized void updateVisibility(String username, boolean visible) {
     User current = requireUser(username);
     saveReplacement(new User(username, current.getPasswordHash(), copyPins(current.getPins()),
-        new ArrayList<>(current.getFriends()), visible));
+        new ArrayList<>(current.getFriends()), new ArrayList<>(current.getFriends()), visible));
   }
 
   /** Returns the existing account; updates must never manufacture users. */
@@ -141,8 +164,14 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
             || record.pins.stream().anyMatch(Objects::isNull) || result.containsKey(record.username)) {
           throw new IllegalStateException("Invalid or duplicate account record in JSON file.");
         }
+        List<String> requests = record.friendRequests == null
+                ? new ArrayList<>() : record.friendRequests;
+        if (requests.stream().anyMatch(request -> request == null || request.isBlank())) {
+          throw new IllegalStateException("Invalid friend request in JSON file.");
+        }
         result.put(record.username, new User(record.username, record.passwordHash,
-            copyPins(record.pins), new ArrayList<>(record.friends), record.visible));
+                copyPins(record.pins), new ArrayList<>(record.friends),
+                new ArrayList<>(requests), record.visible));
       }
       return result;
     } catch (IOException | JsonParseException exception) {
@@ -184,7 +213,7 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
   /** Copies an account without sharing its mutable pin objects with callers. */
   private static User copy(User user) {
     return new User(user.getUsername(), user.getPasswordHash(), copyPins(user.getPins()),
-        new ArrayList<>(user.getFriends()), user.isVisible());
+        new ArrayList<>(user.getFriends()), new ArrayList<>(user.getFriendRequests()), user.isVisible());
   }
 
   /** Copies pins using Gson because the team's Pin model does not expose all getters. */
@@ -202,6 +231,7 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
     private String username;
     private String passwordHash;
     private List<String> friends;
+    private List<String> friendRequests;
     private List<Pin> pins;
     private boolean visible;
 
@@ -214,6 +244,7 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
       username = user.getUsername();
       passwordHash = user.getPasswordHash();
       friends = new ArrayList<>(user.getFriends());
+      friendRequests = new ArrayList<>(user.getFriendRequests());
       pins = copyPins(user.getPins());
       visible = user.isVisible();
     }

@@ -26,7 +26,7 @@ Zoom increases with detail in the view model; `MapPanel` converts it to JXMapVie
 
 ## Tests
 
-Run `mvn test` with Java 17. The combined 48 tests pass on Java 17. Map tests run headlessly without live tile requests and cover initialization, adapters, missing tokens, tile URLs, dragging, zooming, and control positioning after resize. Integration tests cover signup/login → home map → profile → map → logout with temporary account files.
+Run `mvn test` with Java 17. The combined account and map tests run on Java 17. Map tests run headlessly without live tile requests and cover initialization, adapters, missing tokens, tile URLs, dragging, zooming, and control positioning after resize. Integration tests cover signup/login → home map → profile → map → logout with temporary account files.
 Check live imagery, attribution links, navigation, resizing, and window closing manually when changing the UI.
 
 ## References
@@ -34,3 +34,11 @@ Check live imagery, attribution links, navigation, resizing, and window closing 
 - [Mapbox Static Tiles API](https://docs.mapbox.com/api/maps/static-tiles/)
 - [JXMapViewer2](https://github.com/msteiger/jxmapviewer2)
 - The bundled logo comes from the [Mapbox.js CSS asset](https://api.mapbox.com/mapbox.js/v3.3.1/mapbox.css). Keep the logo and attribution links visible.
+
+## Pin details preview — #21
+
+On `john-21-pin-details`, Add Pin → choose a location → Continue opens the details preview beside the map. The real flow will insert Taysen’s passage selection before this form. Create Pin remains disabled until that handoff and #23 saving are connected.
+
+Thoughts and a PNG/JPEG attachment are optional; choose an audience explicitly. Back retains the draft while revising the location. Cancel clears it. Logging out also clears the entire draft, selected marker, text, audience, and image preview. Images are previewed locally (up to 10 MB / 20 million pixels) without uploading or copying files. Those are local preview limits; persistent image storage remains a team decision.
+
+The draft audience is temporary state; mapping it to the shared Pin representation and enforcing read permissions remain integration work. No entity or pin-storage implementation is changed. Implementation, tests, and documentation were created with AI assistance.

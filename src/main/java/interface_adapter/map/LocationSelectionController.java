@@ -22,6 +22,9 @@ public class LocationSelectionController {
      */
     public void select(double latitude, double longitude) { input.select(latitude, longitude); }
 
+    /** Returns to the existing selection without clearing the marker. */
+    public void resume() { input.resume(); }
+
     /** Requests continuation to book selection. */
     public void confirm() { input.confirm(); }
 

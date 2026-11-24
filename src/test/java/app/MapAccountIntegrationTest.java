@@ -15,6 +15,9 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import javax.swing.JTextArea;
+import javax.swing.JRadioButton;
+import view.PinDetailsPanel;
 import javax.swing.SwingUtilities;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -96,6 +99,81 @@ class MapAccountIntegrationTest {
       assertTrue(fields(screens, JLabel.class).stream()
           .anyMatch(label -> label.getText() != null && label.getText().contains("MAPBOX_ACCESS_TOKEN")));
     });
+  }
+
+  /** Details survive Back but cancellation and logout clear all form entries. */
+  @Test
+  void detailsLifecycleIsBoundToTheAuthenticatedSession() throws Exception {
+    SwingUtilities.invokeAndWait(() -> {
+      ViewManager screens = new AppBuilder().accountFile(directory.resolve("details-users.json"))
+          .mapboxToken("pk.test").buildContent();
+      click(visibleScreen(screens), "Create account");
+      Container signup = visibleScreen(screens);
+      fields(signup, JTextField.class).get(0).setText("drafttester");
+      for (JPasswordField password : fields(signup, JPasswordField.class)) {
+        password.setText("testpassword123");
+      }
+      click(signup, "Create account");
+      Container login = visibleScreen(screens);
+      fields(login, JTextField.class).get(0).setText("drafttester");
+      fields(login, JPasswordField.class).get(0).setText("testpassword123");
+      click(login, "Log in");
+      Container home = visibleScreen(screens);
+      JXMapViewer viewer = fields(home, JXMapViewer.class).get(0);
+      PinDetailsPanel details = fields(home, PinDetailsPanel.class).get(0);
+      JTextArea thoughts = fields(details, JTextArea.class).get(0);
+      JRadioButton audience = fields(details, JRadioButton.class).get(0);
+      click(home, "Add Pin");
+      selectMapCenter(viewer);
+      click(home, "Continue");
+      assertTrue(details.isVisible());
+      thoughts.setText("Keep when going Back");
+      audience.doClick(0);
+      click(details, "Back");
+      assertFalse(details.isVisible());
+      click(home, "Continue");
+      assertTrue(details.isVisible());
+      assertEquals("Keep when going Back", thoughts.getText());
+      assertTrue(audience.isSelected());
+      click(details, "Cancel");
+      assertFalse(details.isVisible());
+      assertEquals("", thoughts.getText());
+      assertFalse(audience.isSelected());
+      click(home, "Add Pin");
+      selectMapCenter(viewer);
+      click(home, "Continue");
+      thoughts.setText("Clear on logout");
+      audience.doClick(0);
+      click(home, "Log Out");
+      assertInstanceOf(LoginView.class, visibleScreen(screens));
+      assertFalse(details.isVisible());
+      assertEquals("", thoughts.getText());
+      assertFalse(audience.isSelected());
+      assertTrue(((WaypointPainter<?>) viewer.getOverlayPainter()).getWaypoints().isEmpty());
+      login = visibleScreen(screens);
+      fields(login, JPasswordField.class).get(0).setText("testpassword123");
+      click(login, "Log in");
+      click(home, "Add Pin");
+      selectMapCenter(viewer);
+      click(home, "Continue");
+      assertTrue(details.isVisible());
+      assertEquals("", thoughts.getText());
+      assertFalse(audience.isSelected());
+      assertFalse(fields(details, JButton.class).stream()
+          .filter(button -> "Create Pin".equals(button.getText())).findFirst().orElseThrow().isEnabled());
+    });
+  }
+
+  /**
+   * Selects the visible map center without painting or fetching tiles.
+   * @param viewer interactive map
+   */
+  private static void selectMapCenter(JXMapViewer viewer) {
+    viewer.setSize(800, 600);
+    viewer.dispatchEvent(new MouseEvent(viewer, MouseEvent.MOUSE_PRESSED, 0,
+        InputEvent.BUTTON1_DOWN_MASK, 400, 300, 1, false, MouseEvent.BUTTON1));
+    viewer.dispatchEvent(new MouseEvent(viewer, MouseEvent.MOUSE_RELEASED, 1,
+        0, 400, 300, 1, false, MouseEvent.BUTTON1));
   }
 
   /**
