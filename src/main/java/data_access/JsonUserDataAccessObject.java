@@ -22,13 +22,14 @@ import models.User;
 import use_case.change_password.ChangePasswordUserDataAccessInterface;
 import use_case.login.LoginUserDataAccessInterface;
 import use_case.profile.ProfileUserDataAccessInterface;
+import use_case.respond_friend.RespondFriendUserDataAccessInterface;
 import use_case.signup.SignupUserDataAccessInterface;
 import use_case.add_friend.AddFriendUserDataAccessInterface;
 
 /** Stores local user accounts, friend lists, and pins in a JSON file. */
 public final class JsonUserDataAccessObject implements SignupUserDataAccessInterface,
     LoginUserDataAccessInterface, ChangePasswordUserDataAccessInterface,
-    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface {
+    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, RespondFriendUserDataAccessInterface {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final Type PIN_LIST_TYPE = new TypeToken<ArrayList<Pin>>() { }.getType();
 
@@ -105,6 +106,43 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
     recipient.receiveFriendRequest(username);
     Map<String, User> proposed = new HashMap<>(users);
     proposed.put(friendUsername, recipient);
+    persist(proposed);
+    users = proposed;
+  }
+
+  /** Makes both users friends and clears the request, writing the file before committing. */
+  @Override
+  public synchronized void acceptFriendRequest(String username, String requesterUsername) {
+    User me = copy(requireUser(username));
+    User requester = copy(requireUser(requesterUsername));
+    if (!me.getFriendRequests().contains(requesterUsername)) {
+      throw new IllegalStateException("No pending request.");
+    }
+    if (me.getFriends().contains(requesterUsername)
+            || requester.getFriends().contains(username)) {
+      throw new IllegalStateException("Users are already friends.");
+    }
+    me.removeFriendRequest(requesterUsername);
+    requester.removeFriendRequest(username);
+    me.addFriend(requesterUsername);
+    requester.addFriend(username);
+    Map<String, User> proposed = new HashMap<>(users);
+    proposed.put(username, me);
+    proposed.put(requesterUsername, requester);
+    persist(proposed);
+    users = proposed;
+  }
+
+  /** Removes a pending request and writes the file before committing. */
+  @Override
+  public synchronized void declineFriendRequest(String username, String requesterUsername) {
+    User me = copy(requireUser(username));
+    if (!me.getFriendRequests().contains(requesterUsername)) {
+      throw new IllegalStateException("No pending request.");
+    }
+    me.removeFriendRequest(requesterUsername);
+    Map<String, User> proposed = new HashMap<>(users);
+    proposed.put(username, me);
     persist(proposed);
     users = proposed;
   }
