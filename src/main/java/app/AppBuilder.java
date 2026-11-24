@@ -11,8 +11,11 @@ import interface_adapter.home.HomeViewModel;
 import interface_adapter.map.MapController;
 import interface_adapter.map.MapPresenter;
 import interface_adapter.map.MapViewModel;
+import interface_adapter.remove_friend.RemoveFriendController;
+import interface_adapter.remove_friend.RemoveFriendPresenter;
 import use_case.display_map.DisplayMapInteractor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
+import use_case.remove_friend.RemoveFriendInteractor;
 import view.MapPanel;
 import view.MapboxTileFactoryInfo;
 import interface_adapter.login.LoginController;
@@ -140,8 +143,12 @@ public final class AppBuilder {
     AddFriendPresenter addFriendPresenter = new AddFriendPresenter(profileModel);
     AddFriendController addFriendController = new AddFriendController(
             new AddFriendInteractor(accounts, addFriendPresenter, session));
+    RemoveFriendPresenter removeFriendPresenter = new RemoveFriendPresenter(profileModel);
+    RemoveFriendController removeFriendController = new RemoveFriendController(
+            new RemoveFriendInteractor(removeFriendPresenter, session, accounts));
 
-    ProfileView profileView = new ProfileView(profileController, logoutController, profileModel, addFriendController);
+    ProfileView profileView = new ProfileView(profileController, logoutController, profileModel, addFriendController,
+            removeFriendController);
     if (friendsComponent != null) {
       profileView.setFriendsComponent(friendsComponent);
     }

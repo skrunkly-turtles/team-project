@@ -115,4 +115,11 @@ public final class User {
       throw new IllegalArgumentException("Friend already exists");
     }
   }
+
+  /** Removes a friend's username from this user's friend list. */
+  public void removeFriend(String friendUsername) {
+    if(!friends.remove(friendUsername)){
+      throw new IllegalArgumentException("Not a friend");
+    }
+  }
 }
