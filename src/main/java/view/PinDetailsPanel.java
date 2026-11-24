@@ -22,6 +22,8 @@ public class PinDetailsPanel extends JPanel {
     private final PinDetailsViewModel viewModel;
     private final JTextArea thoughts = new JTextArea(5, 22);
     private final JLabel location = new JLabel();
+    private final JLabel source = new JLabel();
+    private final JTextArea passageText = new JTextArea(5, 22);
     private final JLabel imagePreview = new JLabel("No image attached");
     private final JLabel imageStatus = new JLabel("PNG/JPEG • up to 10 MB • 20 MP");
     private final ButtonGroup audience = new ButtonGroup();
@@ -47,7 +49,13 @@ public class PinDetailsPanel extends JPanel {
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
         form.add(new JLabel("Pin details"));
         form.add(location);
-        form.add(new JLabel("<html>Details preview<br>Passage selection is not connected yet.</html>"));
+        form.add(source);
+        passageText.setEditable(false);
+        passageText.setLineWrap(true);
+        passageText.setWrapStyleWord(true);
+        JScrollPane passageScroll = new JScrollPane(passageText);
+        passageScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, 130));
+        form.add(passageScroll);
         form.add(Box.createVerticalStrut(14));
         form.add(new JLabel("Your thoughts (optional)"));
         thoughts.setLineWrap(true);
@@ -128,6 +136,8 @@ public class PinDetailsPanel extends JPanel {
         PinCreationDraft draft = state.getDraft();
         if (draft == null) {
             thoughts.setText("");
+            source.setText("");
+            passageText.setText("");
             audience.clearSelection();
             imagePath = null;
             imagePreview.setIcon(null);
@@ -138,6 +148,11 @@ public class PinDetailsPanel extends JPanel {
             try {
                 location.setText(String.format(Locale.ROOT, "Location: %.5f, %.5f",
                         draft.getLocation().getLatitude(), draft.getLocation().getLongitude()));
+                source.setText(draft.getPassage() == null ? "No passage selected"
+                        : draft.getPassage().getBookTitle()
+                        + (draft.getPassage().getAuthor().isEmpty() ? "" : " — " + draft.getPassage().getAuthor()));
+                passageText.setText(draft.getPassage() == null ? "" : draft.getPassage().getText());
+                passageText.setCaretPosition(0);
                 if (!thoughts.getText().equals(draft.getThoughts())) { thoughts.setText(draft.getThoughts()); }
                 audience.clearSelection();
                 if (draft.getVisibility() == Visibility.PUBLIC) { publicChoice.setSelected(true); }

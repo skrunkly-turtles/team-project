@@ -79,6 +79,27 @@ class PinDetailsPanelTest {
         });
     }
 
+    /** Received source metadata is displayed as plain text without changing the selected passage. */
+    @Test
+    void showsLibrarySelectionAlongsideOptionalDetails() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            PinDetailsViewModel model = new PinDetailsViewModel();
+            PinDetailsController controller = new PinDetailsController(new PinDetailsInteractor(new PinDetailsPresenter(model)));
+            PinDetailsPanel panel = new PinDetailsPanel(controller, model);
+            SelectedPassage selected = new SelectedPassage("Example", "Author", "Selected text");
+            controller.open(new SelectedLocation(1, 2), selected);
+            JTextArea thoughts = (JTextArea) find(panel, JTextArea.class, null);
+            thoughts.setText("My own thoughts");
+            ((JRadioButton) find(panel, JRadioButton.class, "Private — only you")).doClick(0);
+            assertSame(selected, model.getState().getDraft().getPassage());
+            assertEquals("My own thoughts", model.getState().getDraft().getThoughts());
+            controller.back();
+            controller.open(new SelectedLocation(3, 4));
+            assertSame(selected, model.getState().getDraft().getPassage());
+            assertEquals("My own thoughts", thoughts.getText());
+        });
+    }
+
     /**
      * Finds a control in nested form containers.
      * @param root starting container
@@ -88,7 +109,7 @@ class PinDetailsPanelTest {
      */
     private static Component find(Container root, Class<?> type, String text) {
         for (Component child : root.getComponents()) {
-            if (type.isInstance(child) && (text == null
+            if (type.isInstance(child) && (!(child instanceof JTextArea) || ((JTextArea) child).isEditable()) && (text == null
                     || child instanceof AbstractButton && ((AbstractButton) child).getText().equals(text))) { return child; }
             if (child instanceof Container) {
                 Component result = find((Container) child, type, text);

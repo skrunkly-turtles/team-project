@@ -9,6 +9,11 @@ public interface PinDetailsInputBoundary {
      * @param location confirmed location
      */
     void open(SelectedLocation location);
+    /** Opens details with the library selection without creating a persisted Pin.
+     * @param location confirmed location
+     * @param passage source metadata and selected text
+     */
+    void open(SelectedLocation location, SelectedPassage passage);
     /**
      * Replaces the optional fields and audience in the current draft.
      * @param thoughts optional text

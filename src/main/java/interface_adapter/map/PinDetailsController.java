@@ -1,6 +1,7 @@
 package interface_adapter.map;
 
 import use_case.pin_details.PinDetailsInputBoundary;
+import use_case.pin_details.SelectedPassage;
 import use_case.pin_details.PinCreationDraft.Visibility;
 import use_case.select_location.SelectedLocation;
 
@@ -17,6 +18,11 @@ public class PinDetailsController {
      * @param location selected geographic position
      */
     public void open(SelectedLocation location) { input.open(location); }
+    /** Receives book metadata and text from the library integration.
+     * @param location confirmed coordinate
+     * @param passage selected book and passage
+     */
+    public void open(SelectedLocation location, SelectedPassage passage) { input.open(location, passage); }
     /**
      * Passes current form values to the draft.
      * @param thoughts optional text
