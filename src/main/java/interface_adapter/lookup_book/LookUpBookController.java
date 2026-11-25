@@ -1,4 +1,4 @@
-package controller;
+package interface_adapter.lookup_book;
 /*
 OkHttpClient client = new OkHttpClient();
 
@@ -21,8 +21,8 @@ try (Response response = client.newCall(request).execute()) {
     https://github.com/CSC207-UofT/207-course-notes/blob/main/apis-json-and-files.md#apis-json-and-files
  */
 
-import inputBoundary.LookUpBookInputBoundary;
-import inputBoundary.LookUpBookInputData;
+import use_case.lookup_book.LookUpBookInputBoundary;
+import use_case.lookup_book.LookUpBookInputData;
 
 /*
     User Agent: CSC207 Library App (taysen.victory@mail.utoronto.ca)

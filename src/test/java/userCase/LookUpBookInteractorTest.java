@@ -1,11 +1,13 @@
 package userCase;
 
 import models.Book;
-import inputBoundary.LookUpBookInputData;
-import outputBoundary.LookUpBookOutputBoundary;
-import outputBoundary.LookUpBookOutputData;
+import use_case.lookup_book.LookUpBookInputData;
+import use_case.lookup_book.LookUpBookOutputBoundary;
+import use_case.lookup_book.LookUpBookOutputData;
 import outputBoundary.LookUpBookReaderData;
 import org.junit.jupiter.api.Test;
+import use_case.lookup_book.LookUpBookDataAccessInterface;
+import use_case.lookup_book.LookUpBookInteractor;
 
 import java.util.ArrayList;
 import java.util.List;

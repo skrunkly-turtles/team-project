@@ -1,4 +1,4 @@
-package inputBoundary;
+package use_case.lookup_book;
 
 public class LookUpBookInputData {
     private final String query;

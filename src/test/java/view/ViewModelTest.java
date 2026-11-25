@@ -1,5 +1,8 @@
-package views;
+package view;
 
+import interface_adapter.lookup_book.ReaderState;
+import interface_adapter.lookup_book.LookupBookViewModel;
+import models.ViewNames;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -11,14 +14,14 @@ class ViewModelTest {
 
     @Test
     void newViewModel_initialState() {
-        ViewModel<String> viewModel = new ViewModel<>(ViewNames.LOOKUP_VIEW);
+        LookupBookViewModel<String> viewModel = new LookupBookViewModel<>(ViewNames.LOOKUP_VIEW);
 
         assertEquals("lookup", viewModel.getState());
     }
 
     @Test
     void setState_updatesStateAndNotifiesListener() {
-        ViewModel<ReaderState> viewModel = new ViewModel<>(new ReaderState());
+        LookupBookViewModel<ReaderState> viewModel = new LookupBookViewModel<>(new ReaderState());
         List<Object> newValuesSeen = new ArrayList<>();
         viewModel.addPropertyChangeListener(event -> newValuesSeen.add(event.getNewValue()));
         ReaderState pride = new ReaderState("Pride and Prejudice", "I must think your language too strong in speaking of both");
@@ -32,7 +35,7 @@ class ViewModelTest {
 
     @Test
     void setStateToSameValue_doesNotNotifyListener() {
-        ViewModel<String> viewModel = new ViewModel<>(ViewNames.LOOKUP_VIEW);
+        LookupBookViewModel<String> viewModel = new LookupBookViewModel<>(ViewNames.LOOKUP_VIEW);
         List<Object> newValuesSeen = new ArrayList<>();
         viewModel.addPropertyChangeListener(event -> newValuesSeen.add(event.getNewValue()));
 

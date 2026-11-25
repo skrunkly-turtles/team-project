@@ -1,6 +1,8 @@
-package views;
+package view;
 
-import controller.LookUpBookController;
+import interface_adapter.lookup_book.LookUpBookController;
+import interface_adapter.lookup_book.LookUpBookState;
+import interface_adapter.lookup_book.LookupBookViewModel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,7 +14,7 @@ import java.util.List;
 
 public class LookUpBookView extends JPanel implements PropertyChangeListener {
     LookUpBookController controller;
-    private final ViewModel<LookUpBookState> viewModel;
+    private final LookupBookViewModel<LookUpBookState> viewModel;
     private final JTextField searchField = new JTextField(20);
     private final JButton searchButton = new JButton("Search");
     private final JButton openButton = new JButton("Open");
@@ -21,7 +23,7 @@ public class LookUpBookView extends JPanel implements PropertyChangeListener {
     private final JLabel statusLabel = new JLabel();
 
 
-    public LookUpBookView(LookUpBookController controller, ViewModel<LookUpBookState> viewModel) {
+    public LookUpBookView(LookUpBookController controller, LookupBookViewModel<LookUpBookState> viewModel) {
         this.controller = controller;
         this.viewModel = viewModel;
         viewModel.addPropertyChangeListener(this);

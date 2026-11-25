@@ -1,15 +1,15 @@
-package views;
+package interface_adapter.lookup_book;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 /** Observable UI state holder; Swing views observe its state via PropertyChangeListener. */
-public class ViewModel<T> {
+public class LookupBookViewModel<T> {
     private final PropertyChangeSupport support = new PropertyChangeSupport(this);
     private T state;
 
     /** Creates a view model with initial state. */
-    public ViewModel(T initialState) { this.state = initialState; }
+    public LookupBookViewModel(T initialState) { this.state = initialState; }
 
     /** Returns the current UI state. */
     public T getState() { return state; }

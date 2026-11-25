@@ -1,4 +1,9 @@
-package views;
+package view;
+
+import interface_adapter.lookup_book.ReaderState;
+import interface_adapter.lookup_book.LookupBookViewModel;
+import interface_adapter.ViewManagerModel;
+import models.ViewNames;
 
 import javax.swing.*;
 import java.awt.*;
@@ -7,16 +12,16 @@ import java.beans.PropertyChangeListener;
 
 /** Shows the full text of the opened book, with a button back to the search screen. */
 public class ReaderView extends JPanel implements PropertyChangeListener {
-    private final ViewModel<ReaderState> viewModel;
+    private final LookupBookViewModel<ReaderState> viewModel;
     private final JLabel titleLabel = new JLabel();
     private final JButton backButton = new JButton("Back to search");
     private final JTextArea textArea = new JTextArea();
 
-    public ReaderView(ViewModel<ReaderState> viewModel, ViewModel<String> viewManagerModel) {
+    public ReaderView(LookupBookViewModel<ReaderState> viewModel, ViewManagerModel viewManagerModel) {
         this.viewModel = viewModel;
         viewModel.addPropertyChangeListener(this);
 
-        backButton.addActionListener(event -> viewManagerModel.setState(ViewNames.LOOKUP_VIEW));
+        backButton.addActionListener(event -> viewManagerModel.show(ViewNames.LOOKUP_VIEW));
 
         textArea.setEditable(false);
         textArea.setLineWrap(true);

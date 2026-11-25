@@ -1,4 +1,4 @@
-package views;
+package interface_adapter.lookup_book;
 
 public class ReaderState {
     private String title = "";
