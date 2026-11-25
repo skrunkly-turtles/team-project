@@ -14,7 +14,7 @@ public final class EditPinController {
     /** Submits the edited contents of the given pin. */
     public void execute(int pinId, String name, String description, String latitude,
                         String longitude, String passageText, String bookTitle, String author, String year) {
-        interactor.execute(new EditPinInputData(pinId, name, description, latitude, longitude,
+        interactor.execute(new EditPinInputData(pinId, description, latitude, longitude,
                 passageText, bookTitle, author, year));
     }
 }

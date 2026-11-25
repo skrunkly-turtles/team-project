@@ -7,12 +7,16 @@ import interface_adapter.ViewManagerModel;
 import interface_adapter.change_password.ChangePasswordController;
 import interface_adapter.change_password.ChangePasswordPresenter;
 import interface_adapter.change_password.ChangePasswordViewModel;
+import interface_adapter.edit_pin.EditPinController;
+import interface_adapter.edit_pin.EditPinPresenter;
+import interface_adapter.edit_pin.EditPinViewModel;
 import interface_adapter.home.HomeViewModel;
 import interface_adapter.map.MapController;
 import interface_adapter.map.MapPresenter;
 import interface_adapter.map.MapViewModel;
 import use_case.display_map.DisplayMapInteractor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
+import use_case.edit_pin.EditPinInteractor;
 import use_case.read_pins.ReadPinsInteractor;
 import view.*;
 import interface_adapter.login.LoginController;
@@ -55,6 +59,8 @@ public final class AppBuilder {
   private JComponent friendsComponent;
   private JComponent pinsComponent;
   private String mapboxToken = System.getenv("MAPBOX_ACCESS_TOKEN");
+
+  private final int MAX_PASSAGE_WORDS = 250;
 
   /**
    * Configures map imagery; null displays local setup instructions.
@@ -140,12 +146,16 @@ public final class AppBuilder {
     ReadPinsViewModel readPinsModel = new ReadPinsViewModel();
     ReadPinsController readPinsController = new ReadPinsController(
             new ReadPinsInteractor(accounts, new ReadPinsPresenter(readPinsModel), session));
+    EditPinViewModel editPinModel = new EditPinViewModel();
+    EditPinController editPinController = new EditPinController(new EditPinInteractor(
+            accounts, new EditPinPresenter(editPinModel), session, MAX_PASSAGE_WORDS));
 
     ProfileView profileView = new ProfileView(profileController, logoutController, profileModel, addFriendController);
     if (friendsComponent != null) {
       profileView.setFriendsComponent(friendsComponent);
     }
-    profileView.setPinsComponent(new PinView(readPinsController, readPinsModel, profileModel));
+    profileView.setPinsComponent(new PinView(readPinsController, readPinsModel,
+            profileModel, editPinController, editPinModel));
 
     ViewManager viewManager = new ViewManager(navigator);
     viewManager.add(new LoginView(loginController, loginModel), "login");

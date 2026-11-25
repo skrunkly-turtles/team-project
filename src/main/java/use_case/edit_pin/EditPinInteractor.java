@@ -46,11 +46,6 @@ public final class EditPinInteractor implements EditPinInputBoundary {
             presenter.prepareFailureView("You can only edit pins you created.");
             return;
         }
-        String name = trimmed(input.getName());
-        if (name.isEmpty()) {
-            presenter.prepareFailureView("Pin name is required.");
-            return;
-        }
         String text = trimmed(input.getPassageText());
         if (text.isEmpty()) {
             presenter.prepareFailureView("Passage is required.");
@@ -95,7 +90,7 @@ public final class EditPinInteractor implements EditPinInputBoundary {
                 trimmed(input.getDescription()), existing.isVisible());
         try {
             accounts.updatePin(username, updated);
-            presenter.prepareSuccessView(new EditPinOutputData(username, updated.getId(), name),
+            presenter.prepareSuccessView(new EditPinOutputData(username, updated.getId()),
                     "Pin updated.");
         } catch (IllegalStateException exception) {
             presenter.prepareFailureView("Could not save changes. Please try again.");

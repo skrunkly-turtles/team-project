@@ -18,8 +18,7 @@ import use_case.signup.SignupUserDataAccessInterface;
 /** An in-memory DAO for independently testing the account use cases. */
 public final class InMemoryUserDataAccessObject implements SignupUserDataAccessInterface,
     LoginUserDataAccessInterface, ChangePasswordUserDataAccessInterface,
-    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, EditPinUserDataAccessInterface {
-    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, ReadPinsUserDataAccessInterface {
+    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, EditPinUserDataAccessInterface, ReadPinsUserDataAccessInterface {
   private final Map<String, User> users = new HashMap<>();
 
   /** Returns whether an account exists. */

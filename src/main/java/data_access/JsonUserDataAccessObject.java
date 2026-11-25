@@ -30,8 +30,7 @@ import use_case.add_friend.AddFriendUserDataAccessInterface;
 /** Stores local user accounts, friend lists, and pins in a JSON file. */
 public final class JsonUserDataAccessObject implements SignupUserDataAccessInterface,
     LoginUserDataAccessInterface, ChangePasswordUserDataAccessInterface,
-    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, EditPinUserDataAccessInterface {
-    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, ReadPinsUserDataAccessInterface {
+    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, EditPinUserDataAccessInterface, ReadPinsUserDataAccessInterface {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final Type PIN_LIST_TYPE = new TypeToken<ArrayList<Pin>>() { }.getType();
 

@@ -46,4 +46,30 @@ class PinJsonStorageTest {
         accounts.getAll().get(0).setVisible(true);
         assertFalse(accounts.get("alice").isVisible() && accounts.get("bob").isVisible());
     }
+
+    @Test
+    void editedPinSurvivesRestart() {
+        Path file = directory.resolve("users.json");
+        JsonUserDataAccessObject accounts = new JsonUserDataAccessObject(file);
+        accounts.save(new User("alice", "hash", new ArrayList<>(List.of(
+                new Pin(1, "alice", new Coordinate(1, 2),
+                        new Passage(new Book("B", "A", 2000), "text", 1), "d", true))),
+                new ArrayList<>(), new ArrayList<>(), false));
+        accounts.updatePin("alice", new Pin(1, "alice", new Coordinate(5, 6),
+                new Passage(new Book("B2", "A2", 2001), "text2", 1), "d2", true));
+
+        Pin loaded = new JsonUserDataAccessObject(file).get("alice").getPins().get(0);
+        assertEquals(6.0, loaded.getCoordinate().getLatitude());
+        assertEquals("text2", loaded.getPassage().getText());
+    }
+
+    @Test
+    void updatePinRejectsMissingPin() {
+        JsonUserDataAccessObject accounts = new JsonUserDataAccessObject(directory.resolve("u.json"));
+        accounts.save(new User("alice", "hash", new ArrayList<>(), new ArrayList<>(),
+                new ArrayList<>(), false));
+        assertThrows(IllegalStateException.class, () -> accounts.updatePin("alice",
+                new Pin(9, "n", new Coordinate(0, 0),
+                        new Passage(new Book("", "", 0), "t", 1), "", true)));
+    }
 }
