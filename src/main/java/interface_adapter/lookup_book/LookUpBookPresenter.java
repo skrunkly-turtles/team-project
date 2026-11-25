@@ -2,7 +2,7 @@ package interface_adapter.lookup_book;
 
 import use_case.lookup_book.LookUpBookOutputBoundary;
 import use_case.lookup_book.LookUpBookOutputData;
-import outputBoundary.LookUpBookReaderData;
+import use_case.lookup_book.LookUpBookReaderData;
 import interface_adapter.ViewManagerModel;
 import models.ViewNames;
 

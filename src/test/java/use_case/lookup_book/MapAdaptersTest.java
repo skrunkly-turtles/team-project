@@ -1,5 +1,8 @@
-package interface_adapter.map;
+package use_case.lookup_book;
 
+import interface_adapter.map.MapController;
+import interface_adapter.map.MapPresenter;
+import interface_adapter.map.MapViewModel;
 import org.junit.jupiter.api.Test;
 import use_case.display_map.DisplayMapOutputData;
 import static org.junit.jupiter.api.Assertions.*;

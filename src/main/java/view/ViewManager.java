@@ -22,7 +22,10 @@ public final class ViewManager extends JPanel implements PropertyChangeListener 
     @Override
     public void propertyChange(PropertyChangeEvent event) {
         final String viewName = (String) event.getNewValue();
-        // May be called from a background thread, so switch screens on the Swing thread.
-        SwingUtilities.invokeLater(() -> cards.show(this, viewName));
+        if (SwingUtilities.isEventDispatchThread()) {
+            cards.show(this, viewName);
+        } else {
+            SwingUtilities.invokeLater(() -> cards.show(this, viewName));
+        }
     }
 }

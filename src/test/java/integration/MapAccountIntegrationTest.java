@@ -1,4 +1,4 @@
-package app;
+package integration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,6 +12,8 @@ import javax.swing.JLabel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+
+import app.AppBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.jxmapviewer.JXMapViewer;

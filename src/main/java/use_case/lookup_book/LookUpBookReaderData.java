@@ -1,4 +1,4 @@
-package outputBoundary;
+package use_case.lookup_book;
 
 /** What the reader screen needs to show one opened book. */
 public class LookUpBookReaderData {

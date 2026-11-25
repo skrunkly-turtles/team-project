@@ -1,9 +1,7 @@
-package presenter;
+package use_case.lookup_book;
 
 import interface_adapter.lookup_book.LookUpBookPresenter;
 import models.Book;
-import use_case.lookup_book.LookUpBookOutputData;
-import outputBoundary.LookUpBookReaderData;
 import org.junit.jupiter.api.Test;
 import interface_adapter.lookup_book.LookUpBookState;
 import interface_adapter.lookup_book.ReaderState;
@@ -102,9 +100,11 @@ class LookUpBookPresenterTest {
 
     @Test
     void readerViewNotWired_isIgnoredWithoutError() {
+        navViewModel.setState(ViewNames.LOOKUP_VIEW);
         LookUpBookPresenter searchOnly = new LookUpBookPresenter(searchViewModel);
 
-        searchOnly.prepareReaderView(new LookUpBookReaderData("Pride and Prejudice", PRIDE_TEXT));
+        assertDoesNotThrow(() ->
+                searchOnly.prepareReaderView(new LookUpBookReaderData("Pride and Prejudice", PRIDE_TEXT)));
 
         assertEquals(ViewNames.LOOKUP_VIEW, navViewModel.getState());
         assertEquals("", readerViewModel.getState().getTitle());
@@ -113,13 +113,16 @@ class LookUpBookPresenterTest {
     @Test
     void openFailView_keepsResultsAndSetsError() {
         LookUpBookPresenter presenter = fullyWiredPresenter();
-        presenter.prepareSuccessView(prideResult());
+        navViewModel.setState(ViewNames.LOOKUP_VIEW);
+        searchViewModel.setState(new LookUpBookState(
+                new ArrayList<>(List.of("Dune")), new ArrayList<>(List.of("id1")), ""));
 
-        presenter.prepareOpenFailView("No text is available for this book");
+        presenter.prepareOpenFailView("Could not open book.");
 
-        assertEquals(1, searchViewModel.getState().getResults().size());
-        assertEquals(List.of(PRIDE_ID), searchViewModel.getState().getBookIds());
-        assertEquals("No text is available for this book", searchViewModel.getState().getError());
+        LookUpBookState state = searchViewModel.getState();
+        assertEquals(List.of("Dune"), state.getResults());
+        assertEquals(List.of("id1"), state.getBookIds());
+        assertEquals("Could not open book.", state.getError());
         assertEquals(ViewNames.LOOKUP_VIEW, navViewModel.getState());
     }
 }
