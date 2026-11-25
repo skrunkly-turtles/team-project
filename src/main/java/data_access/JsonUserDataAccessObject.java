@@ -20,6 +20,7 @@ import java.util.TreeSet;
 import models.Pin;
 import models.User;
 import use_case.change_password.ChangePasswordUserDataAccessInterface;
+import use_case.delete_pin.DeletePinUserDataAccessInterface;
 import use_case.edit_pin.EditPinUserDataAccessInterface;
 import use_case.login.LoginUserDataAccessInterface;
 import use_case.profile.ProfileUserDataAccessInterface;
@@ -30,7 +31,8 @@ import use_case.add_friend.AddFriendUserDataAccessInterface;
 /** Stores local user accounts, friend lists, and pins in a JSON file. */
 public final class JsonUserDataAccessObject implements SignupUserDataAccessInterface,
     LoginUserDataAccessInterface, ChangePasswordUserDataAccessInterface,
-    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, EditPinUserDataAccessInterface, ReadPinsUserDataAccessInterface {
+    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, EditPinUserDataAccessInterface, ReadPinsUserDataAccessInterface,
+        DeletePinUserDataAccessInterface {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final Type PIN_LIST_TYPE = new TypeToken<ArrayList<Pin>>() { }.getType();
 
@@ -125,6 +127,27 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
       }
     }
     if (!found) {
+      throw new IllegalStateException("Pin no longer exists.");
+    }
+    saveReplacement(new User(username, current.getPasswordHash(), copyPins(pins),
+            new ArrayList<>(current.getFriends()),
+            new ArrayList<>(current.getFriendRequests()), current.isVisible()));
+  }
+
+  /** Removes one of the user's pins and writes the file before committing. */
+  @Override
+  public synchronized void deletePin(String username, int pinId) {
+    User current = requireUser(username);
+    List<Pin> pins = new ArrayList<>(current.getPins());
+    boolean removed = false;
+    for (int i = 0; i < pins.size(); i++) {
+      if (pins.get(i).getId() == pinId) {
+        pins.remove(i);
+        removed = true;
+        break;
+      }
+    }
+    if (!removed) {
       throw new IllegalStateException("Pin no longer exists.");
     }
     saveReplacement(new User(username, current.getPasswordHash(), copyPins(pins),

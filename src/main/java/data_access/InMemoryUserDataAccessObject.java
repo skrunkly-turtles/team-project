@@ -9,6 +9,7 @@ import models.Pin;
 import models.User;
 import use_case.add_friend.AddFriendUserDataAccessInterface;
 import use_case.change_password.ChangePasswordUserDataAccessInterface;
+import use_case.delete_pin.DeletePinUserDataAccessInterface;
 import use_case.edit_pin.EditPinUserDataAccessInterface;
 import use_case.login.LoginUserDataAccessInterface;
 import use_case.profile.ProfileUserDataAccessInterface;
@@ -18,7 +19,8 @@ import use_case.signup.SignupUserDataAccessInterface;
 /** An in-memory DAO for independently testing the account use cases. */
 public final class InMemoryUserDataAccessObject implements SignupUserDataAccessInterface,
     LoginUserDataAccessInterface, ChangePasswordUserDataAccessInterface,
-    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, EditPinUserDataAccessInterface, ReadPinsUserDataAccessInterface {
+    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, EditPinUserDataAccessInterface, ReadPinsUserDataAccessInterface,
+        DeletePinUserDataAccessInterface {
   private final Map<String, User> users = new HashMap<>();
 
   /** Returns whether an account exists. */
@@ -94,6 +96,29 @@ public final class InMemoryUserDataAccessObject implements SignupUserDataAccessI
       }
     }
     if (!found) {
+      throw new IllegalStateException("Pin no longer exists.");
+    }
+    users.put(username, new User(username, old.getPasswordHash(), new ArrayList<>(pins),
+            new ArrayList<>(old.getFriends()), new ArrayList<>(old.getFriendRequests()),
+            old.isVisible()));
+  }
+
+  @Override
+  public synchronized void deletePin(String username, int pinId) {
+    User old = users.get(username);
+    if (old == null) {
+      throw new IllegalStateException("Account no longer exists.");
+    }
+    List<Pin> pins = new ArrayList<>(old.getPins());
+    boolean removed = false;
+    for (int i = 0; i < pins.size(); i++) {
+      if (pins.get(i).getId() == pinId) {
+        pins.remove(i);
+        removed = true;
+        break;
+      }
+    }
+    if (!removed) {
       throw new IllegalStateException("Pin no longer exists.");
     }
     users.put(username, new User(username, old.getPasswordHash(), new ArrayList<>(pins),
