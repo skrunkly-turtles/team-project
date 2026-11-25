@@ -40,6 +40,6 @@ public class Pin {
     public boolean isVisible() { return visible; }
 
     public record PinData(int id, String owner, Coordinate coordinate, Passage passage, String description,
-                           boolean visible) { }
+                          boolean visible) { }
 
 }

@@ -1,193 +1,99 @@
 package view;
 
-import interface_adapter.logout.LogoutController;
-import interface_adapter.profile.ProfileController;
 import interface_adapter.profile.ProfileState;
 import interface_adapter.profile.ProfileViewModel;
-import interface_adapter.add_friend.AddFriendController;
-import javax.swing.DefaultListModel;
-import javax.swing.JList;
-import javax.swing.JScrollPane;
+import interface_adapter.read_pins.ReadPinsController;
+import interface_adapter.read_pins.ReadPinsState;
+import interface_adapter.read_pins.ReadPinsViewModel;
+import interface_adapter.edit_pin.EditPinController;
+import interface_adapter.edit_pin.EditPinState;
+import interface_adapter.edit_pin.EditPinViewModel;
 import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.awt.Component;
+import java.awt.Rectangle;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
+import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
+import models.Pin.PinData;
 
-/**
- * General account profile page owned by the account developer.
- *
- * <p>Friend- and pin-management widgets are provided as Swing components by the
- * corresponding feature owners. This view does not implement their use cases.
- */
-public final class ProfileView extends JPanel implements PropertyChangeListener {
-  private final ProfileController controller;
-  private final LogoutController logoutController;
-  private final JLabel usernameLabel = new JLabel("", SwingConstants.CENTER);
+/** Lists the pins the signed-in user may see by id; clicking one opens its details. */
+public final class PinView extends JPanel {
+  private final ReadPinsController controller;
+  private final DefaultListModel<PinData> model = new DefaultListModel<>();
+  private final JList<PinData> list = new JList<>(model);
   private final JLabel statusLabel = new JLabel(" ", SwingConstants.CENTER);
-  private final JPanel friendsSlot = new JPanel(new BorderLayout());
-  private final JPanel pinsSlot = new JPanel(new BorderLayout());
-  private final AddFriendController addFriendController;
-  private final DefaultListModel<String> friendsModel = new DefaultListModel<>();
-  private final JCheckBox confirmLogout = new JCheckBox("Ask before logging out", true);
+  private final PinEditDialog editDialog;
+  private String currentUsername;
 
   /**
-   * Creates the account-owned profile shell with independently replaceable feature slots.
+   * Creates the widget and subscribes it to the state it displays.
    *
-   * @param controller controller for profile-related navigation
-   * @param logoutController controller responsible for ending the active session
-   * @param profileViewModel observable non-sensitive account display state
+   * @param controller loads the accessible pins
+   * @param pinsModel observable pins state
+   * @param profileModel observable profile state, used to reload when the profile changes
    */
-  public ProfileView(ProfileController controller, LogoutController logoutController,
-      ProfileViewModel profileViewModel, AddFriendController addFriendController) {
+  public PinView(ReadPinsController controller, ReadPinsViewModel pinsModel,
+                 ProfileViewModel profileModel) {
     this.controller = controller;
-    this.logoutController = logoutController;
-    this.addFriendController = addFriendController;
-    profileViewModel.addPropertyChangeListener(this);
-    setLayout(new BorderLayout(16, 16));
-    setBorder(BorderFactory.createEmptyBorder(24, 30, 24, 30));
-    add(makeHeader(), BorderLayout.NORTH);
-    add(makeContent(), BorderLayout.CENTER);
-    add(statusLabel, BorderLayout.SOUTH);
-    setPreferredSize(new Dimension(780, 490));
-  }
+    setLayout(new BorderLayout(8, 8));
+    setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
-  /** Builds the upper row with account name and the account-actions dropdown. */
-  private JPanel makeHeader() {
-    JPanel header = new JPanel(new BorderLayout(12, 12));
-    JLabel heading = new JLabel("My Profile");
-    heading.setFont(heading.getFont().deriveFont(22f));
-    header.add(heading, BorderLayout.WEST);
-    JButton back = new JButton("Back to map");
-    back.addActionListener(event -> controller.showHome());
-    JButton accountMenu = new JButton("Account \u25be");
-    JPopupMenu menu = new JPopupMenu();
-    JMenuItem changePassword = new JMenuItem("Change Password");
-    JMenuItem settings = new JMenuItem("Settings");
-    JMenuItem logout = new JMenuItem("Log Out");
-    changePassword.addActionListener(event -> controller.showChangePassword());
-    settings.addActionListener(event -> openSettings());
-    logout.addActionListener(event -> requestLogout());
-    menu.add(changePassword);
-    menu.add(settings);
-    menu.addSeparator();
-    menu.add(logout);
-    accountMenu.addActionListener(event -> menu.show(accountMenu, 0, accountMenu.getHeight()));
-    JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-    actions.add(back);
-    actions.add(accountMenu);
-    header.add(actions, BorderLayout.EAST);
-    return header;
-  }
-
-  /** Builds identity display and two injection points for other members' features. */
-  private JPanel makeContent() {
-    JPanel content = new JPanel(new BorderLayout(14, 14));
-    JPanel identity = new JPanel(new GridLayout(2, 1, 0, 5));
-    usernameLabel.setFont(usernameLabel.getFont().deriveFont(18f));
-    identity.add(usernameLabel);
-    identity.add(new JLabel("Your passage-map account", SwingConstants.CENTER));
-    identity.setBorder(BorderFactory.createCompoundBorder(
-        BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(14, 10, 14, 10)));
-    content.add(identity, BorderLayout.NORTH);
-
-    JPanel features = new JPanel(new GridLayout(1, 2, 16, 0));
-    friendsSlot.setBorder(BorderFactory.createTitledBorder("Friends"));
-    pinsSlot.setBorder(BorderFactory.createTitledBorder("My Pins"));
-    setFriendsComponent(makeFriendsPanel());;
-    setPinsComponent(new JLabel("Katelyn's saved-pins component goes here",
-        SwingConstants.CENTER));
-    features.add(friendsSlot);
-    features.add(pinsSlot);
-    content.add(features, BorderLayout.CENTER);
-    return content;
-  }
-
-  /** Builds the friends list with an add button. */
-  private JPanel makeFriendsPanel() {
-    JPanel panel = new JPanel(new BorderLayout(8, 8));
-    JButton add = new JButton("Add friend");
-    add.addActionListener(event -> openAddFriend());
-    JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-    buttonRow.add(add);
-    panel.add(buttonRow, BorderLayout.NORTH);
-    panel.add(new JScrollPane(new JList<>(friendsModel)), BorderLayout.CENTER);
-    return panel;
-  }
-
-  /** Asks for a username in a modal dialog and delegates to the controller. */
-  private void openAddFriend() {
-    String name = JOptionPane.showInputDialog(this, "Friend's username:", "Add friend",
-            JOptionPane.PLAIN_MESSAGE);
-    if (name != null) {
-      addFriendController.execute(name.trim());
-    }
-  }
-
-  /**
-   * Adds a real friends widget when Katelyn's implementation becomes available.
-   *
-   * @param component reusable friend-management Swing component
-   */
-  public void setFriendsComponent(JComponent component) {
-    replaceSlot(friendsSlot, component);
-  }
-
-  /**
-   * Adds a real pins widget when Katelyn's implementation becomes available.
-   *
-   * @param component reusable saved-pin Swing component
-   */
-  public void setPinsComponent(JComponent component) {
-    replaceSlot(pinsSlot, component);
-  }
-
-  /** Replaces a placeholder with the provided feature component. */
-  private void replaceSlot(JPanel slot, JComponent component) {
-    slot.removeAll();
-    slot.add(component, BorderLayout.CENTER);
-    slot.revalidate();
-    slot.repaint();
-  }
-
-  /** Opens a functional session-level preference for logout confirmation. */
-  private void openSettings() {
-    JOptionPane.showMessageDialog(this, confirmLogout,
-        "Account Settings (this session)", JOptionPane.PLAIN_MESSAGE);
-  }
-
-  /** Confirms if configured, then delegates the logout operation to its controller. */
-  private void requestLogout() {
-    if (confirmLogout.isSelected()) {
-      int answer = JOptionPane.showConfirmDialog(this, "Log out of your account?",
-          "Confirm logout", JOptionPane.YES_NO_OPTION);
-      if (answer != JOptionPane.YES_OPTION) {
-        return;
+    list.setCellRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList<?> source, Object value,
+                                                    int index, boolean selected, boolean focused) {
+        super.getListCellRendererComponent(source, value, index, selected, focused);
+        setText("Pin #" + ((PinData) value).id());
+        return this;
       }
-    }
-    logoutController.execute();
+    });
+    list.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent event) {
+        int index = list.locationToIndex(event.getPoint());
+        Rectangle bounds = index >= 0 ? list.getCellBounds(index, index) : null;
+        if (bounds != null && bounds.contains(event.getPoint())) {
+          PinDetailsDialogue.show(PinView.this, model.get(index));
+        }
+      }
+    });
+
+    add(new JScrollPane(list), BorderLayout.CENTER);
+    add(statusLabel, BorderLayout.SOUTH);
+
+    pinsModel.addPropertyChangeListener(
+            event -> showPins((ReadPinsState) event.getNewValue()));
+    profileModel.addPropertyChangeListener(
+            event -> onProfileChanged((ProfileState) event.getNewValue()));
   }
 
-  /** Applies the latest profile state without ever displaying a password hash. */
-  @Override
-  public void propertyChange(PropertyChangeEvent event) {
-    ProfileState state = (ProfileState) event.getNewValue();
-    usernameLabel.setText(state.getUsername() == null ? "" : "@" + state.getUsername());
-    statusLabel.setText(state.getMessage().isEmpty() ? " " : state.getMessage());
-    friendsModel.clear();
-    for (String friend : state.getFriends()) {
-      friendsModel.addElement(friend);
+  /** Reloads when a signed-in profile is shown, and clears everything on logout. */
+  private void onProfileChanged(ProfileState state) {
+    if (state.getUsername() == null) {
+      model.clear();
+      statusLabel.setText(" ");
+    } else {
+      controller.execute();
+    }
+  }
+
+  /** Replaces the displayed pins with the latest state. */
+  private void showPins(ReadPinsState state) {
+    model.clear();
+    for (PinData pin : state.getPins()) {
+      model.addElement(pin);
+    }
+    if (!state.getMessage().isEmpty()) {
+      statusLabel.setText(state.getMessage());
+    } else {
+      statusLabel.setText(model.isEmpty() ? "No pins to show." : " ");
     }
   }
 }
