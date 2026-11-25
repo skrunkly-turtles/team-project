@@ -22,13 +22,14 @@ import models.User;
 import use_case.change_password.ChangePasswordUserDataAccessInterface;
 import use_case.login.LoginUserDataAccessInterface;
 import use_case.profile.ProfileUserDataAccessInterface;
+import use_case.read_pins.ReadPinsUserDataAccessInterface;
 import use_case.signup.SignupUserDataAccessInterface;
 import use_case.add_friend.AddFriendUserDataAccessInterface;
 
 /** Stores local user accounts, friend lists, and pins in a JSON file. */
 public final class JsonUserDataAccessObject implements SignupUserDataAccessInterface,
     LoginUserDataAccessInterface, ChangePasswordUserDataAccessInterface,
-    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface {
+    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, ReadPinsUserDataAccessInterface {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final Type PIN_LIST_TYPE = new TypeToken<ArrayList<Pin>>() { }.getType();
 
@@ -107,6 +108,16 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
     proposed.put(friendUsername, recipient);
     persist(proposed);
     users = proposed;
+  }
+
+  /** Returns independent copies of every stored account. */
+  @Override
+  public synchronized List<User> getAll() {
+    List<User> all = new ArrayList<>();
+    for (User user : users.values()) {
+      all.add(copy(user));
+    }
+    return all;
   }
 
   /** Persists a complete updated pin list for an existing account. */

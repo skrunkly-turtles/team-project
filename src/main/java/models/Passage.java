@@ -10,4 +10,8 @@ public class Passage {
         this.passage = passage;
         this.word_count = word_count;
     }
+    public Book getBook() { return book; }
+    public String getText() { return passage; }
+    public int getWordCount() { return word_count; }
+
 }

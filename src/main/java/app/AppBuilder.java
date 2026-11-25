@@ -13,8 +13,8 @@ import interface_adapter.map.MapPresenter;
 import interface_adapter.map.MapViewModel;
 import use_case.display_map.DisplayMapInteractor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
-import view.MapPanel;
-import view.MapboxTileFactoryInfo;
+import use_case.read_pins.ReadPinsInteractor;
+import view.*;
 import interface_adapter.login.LoginController;
 import interface_adapter.login.LoginPresenter;
 import interface_adapter.login.LoginViewModel;
@@ -28,6 +28,9 @@ import interface_adapter.signup.SignupPresenter;
 import interface_adapter.signup.SignupViewModel;
 import interface_adapter.add_friend.AddFriendController;
 import interface_adapter.add_friend.AddFriendPresenter;
+import interface_adapter.read_pins.ReadPinsController;
+import interface_adapter.read_pins.ReadPinsPresenter;
+import interface_adapter.read_pins.ReadPinsViewModel;
 import java.awt.Dimension;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -40,12 +43,6 @@ import use_case.logout.LogoutInteractor;
 import use_case.profile.ProfileInteractor;
 import use_case.signup.SignupInteractor;
 import use_case.add_friend.AddFriendInteractor;
-import view.ChangePasswordView;
-import view.HomeView;
-import view.LoginView;
-import view.ProfileView;
-import view.SignupView;
-import view.ViewManager;
 
 /**
  * Composition root: wires use cases to their concrete adapters and Swing screens.
@@ -140,14 +137,16 @@ public final class AppBuilder {
     AddFriendPresenter addFriendPresenter = new AddFriendPresenter(profileModel);
     AddFriendController addFriendController = new AddFriendController(
             new AddFriendInteractor(accounts, addFriendPresenter, session));
+    ReadPinsViewModel readPinsModel = new ReadPinsViewModel();
+    ReadPinsController readPinsController = new ReadPinsController(
+            new ReadPinsInteractor(accounts, new ReadPinsPresenter(readPinsModel), session));
 
     ProfileView profileView = new ProfileView(profileController, logoutController, profileModel, addFriendController);
     if (friendsComponent != null) {
       profileView.setFriendsComponent(friendsComponent);
     }
-    if (pinsComponent != null) {
-      profileView.setPinsComponent(pinsComponent);
-    }
+    profileView.setPinsComponent(new PinView(readPinsController, readPinsModel, profileModel));
+
     ViewManager viewManager = new ViewManager(navigator);
     viewManager.add(new LoginView(loginController, loginModel), "login");
     viewManager.add(new SignupView(signupController, signupModel), "signup");

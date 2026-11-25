@@ -2,18 +2,20 @@ package data_access;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import models.User;
 import use_case.add_friend.AddFriendUserDataAccessInterface;
 import use_case.change_password.ChangePasswordUserDataAccessInterface;
 import use_case.login.LoginUserDataAccessInterface;
 import use_case.profile.ProfileUserDataAccessInterface;
+import use_case.read_pins.ReadPinsUserDataAccessInterface;
 import use_case.signup.SignupUserDataAccessInterface;
 
 /** An in-memory DAO for independently testing the account use cases. */
 public final class InMemoryUserDataAccessObject implements SignupUserDataAccessInterface,
     LoginUserDataAccessInterface, ChangePasswordUserDataAccessInterface,
-    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface {
+    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, ReadPinsUserDataAccessInterface {
   private final Map<String, User> users = new HashMap<>();
 
   /** Returns whether an account exists. */
@@ -62,6 +64,15 @@ public final class InMemoryUserDataAccessObject implements SignupUserDataAccessI
       throw new IllegalStateException("Request not allowed.");
     }
     recipient.receiveFriendRequest(username);
+  }
+  /** Returns independent copies of every stored account. */
+  @Override
+  public synchronized List<User> getAll() {
+    List<User> all = new ArrayList<>();
+    for (User user : users.values()) {
+      all.add(copy(user));
+    }
+    return all;
   }
 
 
