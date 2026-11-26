@@ -8,12 +8,14 @@ import use_case.add_friend.AddFriendUserDataAccessInterface;
 import use_case.change_password.ChangePasswordUserDataAccessInterface;
 import use_case.login.LoginUserDataAccessInterface;
 import use_case.profile.ProfileUserDataAccessInterface;
+import use_case.remove_friend.RemoveFriendDataAccessInterface;
+import use_case.respond_friend.RespondFriendUserDataAccessInterface;
 import use_case.signup.SignupUserDataAccessInterface;
 
 /** An in-memory DAO for independently testing the account use cases. */
 public final class InMemoryUserDataAccessObject implements SignupUserDataAccessInterface,
     LoginUserDataAccessInterface, ChangePasswordUserDataAccessInterface,
-    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface {
+    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, RespondFriendUserDataAccessInterface {
   private final Map<String, User> users = new HashMap<>();
 
   /** Returns whether an account exists. */
@@ -62,6 +64,35 @@ public final class InMemoryUserDataAccessObject implements SignupUserDataAccessI
       throw new IllegalStateException("Request not allowed.");
     }
     recipient.receiveFriendRequest(username);
+  }
+
+  @Override
+  public synchronized void acceptFriendRequest(String username, String requesterUsername) {
+    User me = users.get(username);
+    User requester = users.get(requesterUsername);
+    if (me == null || requester == null) {
+      throw new IllegalStateException("Account no longer exists.");
+    }
+    if (!me.getFriendRequests().contains(requesterUsername)) {
+      throw new IllegalStateException("No pending request.");
+    }
+    if (me.getFriends().contains(requesterUsername)
+            || requester.getFriends().contains(username)) {
+      throw new IllegalStateException("Users are already friends.");
+    }
+    me.removeFriendRequest(requesterUsername);
+    requester.removeFriendRequest(username);
+    me.addFriend(requesterUsername);
+    requester.addFriend(username);
+  }
+
+  @Override
+  public synchronized void declineFriendRequest(String username, String requesterUsername) {
+    User me = users.get(username);
+    if (me == null || !me.getFriendRequests().contains(requesterUsername)) {
+      throw new IllegalStateException("No pending request.");
+    }
+    me.removeFriendRequest(requesterUsername);
   }
 
 

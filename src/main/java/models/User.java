@@ -86,6 +86,41 @@ public final class User {
     }
   }
 
+  /** Removes an incoming request if present; does nothing otherwise. */
+  public void removeFriendRequest(String fromUsername) {
+    friendRequests.remove(fromUsername);
+  }
+
+  /**
+   * Accepts a pending request: clears it and adds the sender as a friend.
+   *
+   * @param fromUsername the user who sent the request
+   * @throws IllegalArgumentException if there is no pending request from that user
+   *     or they are already a friend
+   */
+  public void acceptFriendRequest(String fromUsername) {
+    if (!friendRequests.contains(fromUsername)) {
+      throw new IllegalArgumentException("No pending request");
+    }
+    if (friends.contains(fromUsername)) {
+      throw new IllegalArgumentException("Friend already exists");
+    }
+    friendRequests.remove(fromUsername);
+    addFriend(fromUsername);
+  }
+
+  /**
+   * Declines a pending request by removing it, without creating a friendship.
+   *
+   * @param fromUsername the user who sent the request
+   * @throws IllegalArgumentException if there is no pending request from that user
+   */
+  public void declineFriendRequest(String fromUsername) {
+    if (!friendRequests.remove(fromUsername)) {
+      throw new IllegalArgumentException("No pending request");
+    }
+  }
+
   /** Returns the existing profile visibility setting. */
   public boolean isVisible() {
     return visible;
@@ -115,4 +150,5 @@ public final class User {
       throw new IllegalArgumentException("Friend already exists");
     }
   }
+
 }
