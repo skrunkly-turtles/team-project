@@ -126,7 +126,10 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
     Map<String, User> proposed = new HashMap<>(users);
     proposed.put(username, me);
     proposed.put(friendUsername, friend);
-  /** Makes both users friends and clears the request, writing the file before committing. */
+    persist(proposed);
+    users = proposed;
+  }
+    /** Makes both users friends and clears the request, writing the file before committing. */
   @Override
   public synchronized void acceptFriendRequest(String username, String requesterUsername) {
     User me = copy(requireUser(username));
@@ -178,7 +181,7 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
   public synchronized void updateVisibility(String username, boolean visible) {
     User current = requireUser(username);
     saveReplacement(new User(username, current.getPasswordHash(), copyPins(current.getPins()),
-        new ArrayList<>(current.getFriends()), new ArrayList<>(current.getFriends()), visible));
+            new ArrayList<>(current.getFriends()), new ArrayList<>(current.getFriendRequests()), visible));
   }
 
   /** Returns the existing account; updates must never manufacture users. */

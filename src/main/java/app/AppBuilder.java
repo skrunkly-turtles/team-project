@@ -154,7 +154,7 @@ public final class AppBuilder {
             respondFriendPresenter, session));
 
 
-    ProfileView profileView = new ProfileView(profileController, logoutController, profileModel, addFriendController, respondFriendController, removeFriendController);
+    ProfileView profileView = new ProfileView(profileController, logoutController, profileModel, addFriendController, removeFriendController, respondFriendController);
     if (friendsComponent != null) {
       profileView.setFriendsComponent(friendsComponent);
     }

@@ -59,6 +59,7 @@ public final class InMemoryUserDataAccessObject implements SignupUserDataAccessI
       throw new IllegalStateException("Account no longer exists.");
     }
     if (sender.getFriends().contains(friendUsername)
+            || recipient.getFriends().contains(username)
             || recipient.getFriendRequests().contains(username)
             || sender.getFriendRequests().contains(friendUsername)) {
       throw new IllegalStateException("Request not allowed.");
@@ -78,6 +79,8 @@ public final class InMemoryUserDataAccessObject implements SignupUserDataAccessI
       friend.removeFriend(username);
     }
   }
+
+  @Override
   public synchronized void acceptFriendRequest(String username, String requesterUsername) {
     User me = users.get(username);
     User requester = users.get(requesterUsername);

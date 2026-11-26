@@ -49,7 +49,6 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
   private final JList<String> requestsList = new JList<>(requestsModel);
   private final JCheckBox confirmLogout = new JCheckBox("Ask before logging out", true);
   private final RemoveFriendController removeFriendController;
-  private final JList<String> friendsList = new JList<>(friendsModel);
 
   /**
    * Creates the account-owned profile shell with independently replaceable feature slots.
@@ -136,7 +135,6 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
     remove.addActionListener(event -> openRemoveFriend());
     buttonRow.add(remove);
     panel.add(buttonRow, BorderLayout.NORTH);
-    panel.add(new JScrollPane(friendsList), BorderLayout.CENTER);
 
     JPanel lists = new JPanel(new GridLayout(2, 1, 0, 8));
     lists.add(new JScrollPane(friendsList));
