@@ -1,4 +1,4 @@
-package dataAccess;
+package data_access;
 
 import models.Book;
 
@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import userCase.LookUpBookDataAccessInterface;
+import use_case.lookup_book.LookUpBookDataAccessInterface;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

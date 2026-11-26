@@ -1,4 +1,4 @@
-package outputBoundary;
+package use_case.lookup_book;
 
 public interface LookUpBookOutputBoundary {
     void prepareSuccessView(LookUpBookOutputData outputData);

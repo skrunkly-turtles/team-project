@@ -1,4 +1,4 @@
-package outputBoundary;
+package use_case.lookup_book;
 
 import java.util.ArrayList;
 import java.util.List;

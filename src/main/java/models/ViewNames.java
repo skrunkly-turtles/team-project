@@ -1,4 +1,4 @@
-package views;
+package models;
 
 /** Names of the screens. The ViewManager shows the screen whose name is the current state. */
 public final class ViewNames {

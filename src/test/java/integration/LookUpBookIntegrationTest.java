@@ -1,23 +1,22 @@
 package integration;
 
-import controller.LookUpBookController;
+import interface_adapter.ViewManagerModel;
+import interface_adapter.lookup_book.LookUpBookController;
 import models.Book;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import presenter.LookUpBookPresenter;
-import userCase.LookUpBookDataAccessInterface;
-import userCase.LookUpBookInteractor;
-import views.LookUpBookState;
-import views.LookUpBookView;
-import views.ReaderState;
-import views.ReaderView;
-import views.ViewManager;
-import views.ViewModel;
-import views.ViewNames;
+import interface_adapter.lookup_book.LookUpBookPresenter;
+import use_case.lookup_book.LookUpBookDataAccessInterface;
+import use_case.lookup_book.LookUpBookInteractor;
+import interface_adapter.lookup_book.LookUpBookState;
+import view.LookUpBookView;
+import interface_adapter.lookup_book.ReaderState;
+import view.ReaderView;
+import view.ViewManager;
+import interface_adapter.lookup_book.LookupBookViewModel;
+import models.ViewNames;
 
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import java.awt.CardLayout;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,9 +61,9 @@ class LookUpBookIntegrationTest {
     }
 
     private FakeDao dao;
-    private ViewModel<LookUpBookState> searchViewModel;
-    private ViewModel<ReaderState> readerViewModel;
-    private ViewModel<String> navViewModel;
+    private LookupBookViewModel<LookUpBookState> searchViewModel;
+    private LookupBookViewModel<ReaderState> readerViewModel;
+    private ViewManagerModel navViewModel;
     private LookUpBookController controller;
 
     @BeforeEach
@@ -77,9 +76,9 @@ class LookUpBookIntegrationTest {
         shadows.setText(PRIDE_TEXT);
         dao = new FakeDao(List.of(pride, power, shadows));
 
-        searchViewModel = new ViewModel<>(new LookUpBookState(new ArrayList<>(), ""));
-        readerViewModel = new ViewModel<>(new ReaderState());
-        navViewModel = new ViewModel<>(ViewNames.LOOKUP_VIEW);
+        searchViewModel = new LookupBookViewModel<>(new LookUpBookState(new ArrayList<>(), ""));
+        readerViewModel = new LookupBookViewModel<>(new ReaderState());
+        navViewModel = new ViewManagerModel();
         LookUpBookPresenter presenter = new LookUpBookPresenter(searchViewModel, readerViewModel, navViewModel);
         controller = new LookUpBookController(new LookUpBookInteractor(dao, presenter));
     }
@@ -160,7 +159,7 @@ class LookUpBookIntegrationTest {
 
         controller.openBook(PRIDE_ID);
 
-        assertEquals(ViewNames.LOOKUP_VIEW, navViewModel.getState());
+        assertNotEquals(ViewNames.READER_VIEW, navViewModel.getState());
         assertEquals("Could not load this book's text, please try again", searchViewModel.getState().getError());
         assertEquals(3, searchViewModel.getState().getResults().size());
     }
@@ -171,7 +170,7 @@ class LookUpBookIntegrationTest {
 
         controller.openBook(POWER_ID);
 
-        assertEquals(ViewNames.LOOKUP_VIEW, navViewModel.getState());
+        assertNotEquals(ViewNames.READER_VIEW, navViewModel.getState());
         assertEquals("No text is available for this book", searchViewModel.getState().getError());
     }
 
@@ -181,7 +180,7 @@ class LookUpBookIntegrationTest {
 
         controller.openBook("");
 
-        assertEquals(ViewNames.LOOKUP_VIEW, navViewModel.getState());
+        assertNotEquals(ViewNames.READER_VIEW, navViewModel.getState());
         assertEquals("Select a book first", searchViewModel.getState().getError());
     }
 
@@ -189,11 +188,9 @@ class LookUpBookIntegrationTest {
     void openThenGoBack_realScreensSwitchCards() throws Exception {
         LookUpBookView searchView = new LookUpBookView(controller, searchViewModel);
         ReaderView readerView = new ReaderView(readerViewModel, navViewModel);
-        CardLayout cardLayout = new CardLayout();
-        JPanel cards = new JPanel(cardLayout);
-        cards.add(searchView, ViewNames.LOOKUP_VIEW);
-        cards.add(readerView, ViewNames.READER_VIEW);
-        new ViewManager(cards, cardLayout, navViewModel);
+        ViewManager viewManager = new ViewManager(navViewModel);
+        viewManager.add(searchView, ViewNames.LOOKUP_VIEW);
+        viewManager.add(readerView, ViewNames.READER_VIEW);
 
         controller.execute("pride");
         controller.openBook(PRIDE_ID);

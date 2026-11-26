@@ -1,13 +1,13 @@
-package presenter;
+package use_case.lookup_book;
 
+import interface_adapter.lookup_book.LookUpBookPresenter;
 import models.Book;
-import outputBoundary.LookUpBookOutputData;
-import outputBoundary.LookUpBookReaderData;
 import org.junit.jupiter.api.Test;
-import views.LookUpBookState;
-import views.ReaderState;
-import views.ViewModel;
-import views.ViewNames;
+import interface_adapter.lookup_book.LookUpBookState;
+import interface_adapter.lookup_book.ReaderState;
+import interface_adapter.lookup_book.LookupBookViewModel;
+import interface_adapter.ViewManagerModel;
+import models.ViewNames;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,10 +18,10 @@ class LookUpBookPresenterTest {
     private static final String PRIDE_ID = "prideprejudice00aust";
     private static final String PRIDE_TEXT = "\"I must think your language too strong in speaking of both,\" replied Jane; \"and I hope you will be convinced of it by seeing them happy together. But enough of this. You alluded to something else. ";
 
-    private final ViewModel<LookUpBookState> searchViewModel =
-            new ViewModel<>(new LookUpBookState(new ArrayList<>(), ""));
-    private final ViewModel<ReaderState> readerViewModel = new ViewModel<>(new ReaderState());
-    private final ViewModel<String> navViewModel = new ViewModel<>(ViewNames.LOOKUP_VIEW);
+    private final LookupBookViewModel<LookUpBookState> searchViewModel =
+            new LookupBookViewModel<>(new LookUpBookState(new ArrayList<>(), ""));
+    private final LookupBookViewModel<ReaderState> readerViewModel = new LookupBookViewModel<>(new ReaderState());
+    private final ViewManagerModel navViewModel = new ViewManagerModel();
 
     private LookUpBookPresenter fullyWiredPresenter() {
         return new LookUpBookPresenter(searchViewModel, readerViewModel, navViewModel);
@@ -100,9 +100,11 @@ class LookUpBookPresenterTest {
 
     @Test
     void readerViewNotWired_isIgnoredWithoutError() {
+        navViewModel.setState(ViewNames.LOOKUP_VIEW);
         LookUpBookPresenter searchOnly = new LookUpBookPresenter(searchViewModel);
 
-        searchOnly.prepareReaderView(new LookUpBookReaderData("Pride and Prejudice", PRIDE_TEXT));
+        assertDoesNotThrow(() ->
+                searchOnly.prepareReaderView(new LookUpBookReaderData("Pride and Prejudice", PRIDE_TEXT)));
 
         assertEquals(ViewNames.LOOKUP_VIEW, navViewModel.getState());
         assertEquals("", readerViewModel.getState().getTitle());
@@ -111,13 +113,16 @@ class LookUpBookPresenterTest {
     @Test
     void openFailView_keepsResultsAndSetsError() {
         LookUpBookPresenter presenter = fullyWiredPresenter();
-        presenter.prepareSuccessView(prideResult());
+        navViewModel.setState(ViewNames.LOOKUP_VIEW);
+        searchViewModel.setState(new LookUpBookState(
+                new ArrayList<>(List.of("Dune")), new ArrayList<>(List.of("id1")), ""));
 
-        presenter.prepareOpenFailView("No text is available for this book");
+        presenter.prepareOpenFailView("Could not open book.");
 
-        assertEquals(1, searchViewModel.getState().getResults().size());
-        assertEquals(List.of(PRIDE_ID), searchViewModel.getState().getBookIds());
-        assertEquals("No text is available for this book", searchViewModel.getState().getError());
+        LookUpBookState state = searchViewModel.getState();
+        assertEquals(List.of("Dune"), state.getResults());
+        assertEquals(List.of("id1"), state.getBookIds());
+        assertEquals("Could not open book.", state.getError());
         assertEquals(ViewNames.LOOKUP_VIEW, navViewModel.getState());
     }
 }

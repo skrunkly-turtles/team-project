@@ -1,11 +1,6 @@
-package userCase;
+package use_case.lookup_book;
 
 import models.Book;
-import inputBoundary.LookUpBookInputBoundary;
-import inputBoundary.LookUpBookInputData;
-import outputBoundary.LookUpBookOutputBoundary;
-import outputBoundary.LookUpBookOutputData;
-import outputBoundary.LookUpBookReaderData;
 
 import java.util.ArrayList;
 import java.util.List;

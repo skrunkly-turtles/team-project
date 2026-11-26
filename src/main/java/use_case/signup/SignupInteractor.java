@@ -3,6 +3,7 @@ package use_case.signup;
 import java.util.regex.Pattern;
 import models.User;
 import models.UserFactory;
+import models.CommonUserFactory;
 import use_case.security.PasswordHasher;
 
 /** Implements the business rules for creating a new user account. */
@@ -15,7 +16,7 @@ public final class SignupInteractor implements SignupInputBoundary {
 
     /** Injects storage, output, factory, and cryptography abstractions. */
     public SignupInteractor(SignupUserDataAccessInterface userDataAccess,
-                            SignupOutputBoundary presenter, UserFactory userFactory,
+                            SignupOutputBoundary presenter, CommonUserFactory userFactory,
                             PasswordHasher passwordHasher) {
         this.userDataAccess = userDataAccess;
         this.presenter = presenter;

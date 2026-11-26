@@ -1,4 +1,4 @@
-package userCase;
+package use_case.lookup_book;
 
 import models.Book;
 import java.util.List;

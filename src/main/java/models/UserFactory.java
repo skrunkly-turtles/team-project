@@ -1,4 +1,5 @@
 package models;
+import models.User;
 
 /** Creates new user entities independently of the signup use case. */
 public interface UserFactory {

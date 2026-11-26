@@ -1,29 +1,28 @@
-package presenter;
+package interface_adapter.lookup_book;
 
-import outputBoundary.LookUpBookOutputBoundary;
-import outputBoundary.LookUpBookOutputData;
-import outputBoundary.LookUpBookReaderData;
-import views.LookUpBookState;
-import views.ReaderState;
-import views.ViewModel;
-import views.ViewNames;
+import use_case.lookup_book.LookUpBookOutputBoundary;
+import use_case.lookup_book.LookUpBookOutputData;
+import use_case.lookup_book.LookUpBookReaderData;
+import interface_adapter.ViewManagerModel;
+import models.ViewNames;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class LookUpBookPresenter implements LookUpBookOutputBoundary {
     private static final int MAX_LENGTH = 60;
-    private final ViewModel<LookUpBookState> viewModel;
-    private final ViewModel<ReaderState> readerViewModel;     // null if only searching is wired up
-    private final ViewModel<String> viewManagerModel;         // null if only searching is wired up
+    private final LookupBookViewModel<LookUpBookState> viewModel;
+    private final LookupBookViewModel<ReaderState> readerViewModel;     // null if only searching is wired up
+    private final ViewManagerModel viewManagerModel;         // null if only searching is wired up
 
-    public LookUpBookPresenter(ViewModel<LookUpBookState> viewModel) {
+    public LookUpBookPresenter(LookupBookViewModel<LookUpBookState> viewModel) {
         this(viewModel, null, null);
     }
 
     // Optional constructor: also lets the presenter show the reader screen.
-    public LookUpBookPresenter(ViewModel<LookUpBookState> viewModel, ViewModel<ReaderState> readerViewModel,
-                               ViewModel<String> viewManagerModel) {
+    public LookUpBookPresenter(LookupBookViewModel<LookUpBookState> viewModel,
+                               LookupBookViewModel<ReaderState> readerViewModel,
+                               ViewManagerModel viewManagerModel) {
         this.viewModel = viewModel;
         this.readerViewModel = readerViewModel;
         this.viewManagerModel = viewManagerModel;
