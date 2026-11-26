@@ -1,6 +1,27 @@
 package app;
 
 import data_access.JsonUserDataAccessObject;
+import data_access.JsonUserStore;
+import data_access.UserStore;
+import data_access.supabase.SupabaseAuthClient;
+import data_access.supabase.SupabaseConfig;
+import data_access.supabase.SupabaseHttp;
+import data_access.supabase.SupabaseSession;
+import data_access.supabase.SupabaseUserDataAccessObject;
+import use_case.add_friend.AddFriendInputBoundary;
+import use_case.change_password.ChangePasswordInputBoundary;
+import use_case.login.LoginInputBoundary;
+import use_case.logout.LogoutInputBoundary;
+import use_case.profile.ProfileInputBoundary;
+import use_case.session.CurrentUserSession;
+import use_case.signup.SignupInputBoundary;
+import use_case.online.OnlineAddFriendInteractor;
+import use_case.online.OnlineChangePasswordInteractor;
+import use_case.online.OnlineLoginInteractor;
+import use_case.online.OnlineLogoutInteractor;
+import use_case.online.OnlineProfileInteractor;
+import use_case.online.OnlineSignupInteractor;
+
 import data_access.InMemoryCurrentUserSession;
 import data_access.Pbkdf2PasswordHasher;
 import interface_adapter.ViewManagerModel;
@@ -107,8 +128,23 @@ public final class AppBuilder {
    * @return the assembled navigation component
    */
   public ViewManager buildContent() {
-    JsonUserDataAccessObject accounts = new JsonUserDataAccessObject(accountFile);
-    InMemoryCurrentUserSession session = new InMemoryCurrentUserSession();
+
+    boolean online = "supabase".equalsIgnoreCase(
+        System.getenv().getOrDefault("PERSISTENCE_MODE", "json"));
+    UserStore accounts;
+    CurrentUserSession session;
+    SupabaseAuthClient remoteAuth = null;
+    SupabaseSession remoteSession = null;
+    if (online) {
+      SupabaseHttp http = new SupabaseHttp(SupabaseConfig.fromEnvironment());
+      remoteAuth = new SupabaseAuthClient(http);
+      remoteSession = new SupabaseSession(remoteAuth);
+      accounts = new SupabaseUserDataAccessObject(http, remoteSession);
+      session = remoteSession;
+    } else {
+      accounts = new JsonUserStore(new JsonUserDataAccessObject(accountFile));
+      session = new InMemoryCurrentUserSession();
+    }
     Pbkdf2PasswordHasher hasher = new Pbkdf2PasswordHasher();
     ViewManagerModel navigator = new ViewManagerModel();
     SignupViewModel signupModel = new SignupViewModel();
@@ -125,21 +161,42 @@ public final class AppBuilder {
     ChangePasswordPresenter changePresenter = new ChangePasswordPresenter(
         changeModel, profileModel, navigator);
 
+    SignupInputBoundary signup = online
+        ? new OnlineSignupInteractor(remoteAuth, signupPresenter)
+        : new SignupInteractor(accounts, signupPresenter, new CommonUserFactory(), hasher);
+    LoginInputBoundary login = online
+        ? new OnlineLoginInteractor(remoteAuth, remoteSession,
+            (SupabaseUserDataAccessObject) accounts, loginPresenter)
+        : new LoginInteractor(accounts, loginPresenter, hasher, session);
+    LogoutInputBoundary logout = online
+        ? new OnlineLogoutInteractor(remoteAuth, remoteSession, logoutPresenter)
+        : new LogoutInteractor(session, logoutPresenter);
+    ProfileInputBoundary profile = online
+        ? new OnlineProfileInteractor(remoteSession, accounts, profilePresenter)
+        : new ProfileInteractor(session, accounts, profilePresenter);
+    ChangePasswordInputBoundary changePassword = online
+        ? new OnlineChangePasswordInteractor(remoteAuth, remoteSession, changePresenter)
+        : new ChangePasswordInteractor(accounts, changePresenter, hasher, session);
+
     SignupController signupController = new SignupController(
-        new SignupInteractor(accounts, signupPresenter, new CommonUserFactory(), hasher),
+        signup,
         navigator);
     LoginController loginController = new LoginController(
-        new LoginInteractor(accounts, loginPresenter, hasher, session), navigator);
+        login, navigator);
     LogoutController logoutController = new LogoutController(
-        new LogoutInteractor(session, logoutPresenter));
+        logout);
     ProfileController profileController = new ProfileController(
-        new ProfileInteractor(session, accounts, profilePresenter), navigator);
+        profile, navigator);
     ChangePasswordController changeController = new ChangePasswordController(
-        new ChangePasswordInteractor(accounts, changePresenter, hasher, session),
+        changePassword,
         navigator);
     AddFriendPresenter addFriendPresenter = new AddFriendPresenter(profileModel);
+    AddFriendInputBoundary addFriend = online
+        ? new OnlineAddFriendInteractor((SupabaseUserDataAccessObject) accounts,
+            remoteSession, addFriendPresenter)
+        : new AddFriendInteractor(accounts, addFriendPresenter, session);
     AddFriendController addFriendController = new AddFriendController(
-            new AddFriendInteractor(accounts, addFriendPresenter, session));
+            addFriend);
 
     ProfileView profileView = new ProfileView(profileController, logoutController, profileModel, addFriendController);
     if (friendsComponent != null) {
@@ -149,8 +206,8 @@ public final class AppBuilder {
       profileView.setPinsComponent(pinsComponent);
     }
     ViewManager viewManager = new ViewManager(navigator);
-    viewManager.add(new LoginView(loginController, loginModel), "login");
-    viewManager.add(new SignupView(signupController, signupModel), "signup");
+    viewManager.add(new LoginView(loginController, loginModel, online), "login");
+    viewManager.add(new SignupView(signupController, signupModel, online), "signup");
     MapViewModel mapModel = new MapViewModel();
     MapController mapController = new MapController(
         new DisplayMapInteractor(new MapPresenter(mapModel)));
