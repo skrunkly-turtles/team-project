@@ -4,22 +4,26 @@ import interface_adapter.ViewManagerModel;
 import use_case.signup.SignupInputBoundary;
 import use_case.signup.SignupInputData;
 
-/** Converts signup view inputs into use-case input data. */
+/** Converts signup view fields to use-case input. */
 public final class SignupController {
-    private final SignupInputBoundary interactor;
-    private final ViewManagerModel viewManager;
+  private final SignupInputBoundary interactor;
+  private final ViewManagerModel viewManager;
 
-    /** Injects the signup input boundary and navigation model. */
-    public SignupController(SignupInputBoundary interactor, ViewManagerModel viewManager) {
-        this.interactor = interactor;
-        this.viewManager = viewManager;
-    }
+  public SignupController(SignupInputBoundary interactor, ViewManagerModel viewManager) {
+    this.interactor = interactor;
+    this.viewManager = viewManager;
+  }
 
-    /** Executes registration using submitted fields. */
-    public void execute(String username, String password, String repeatedPassword) {
-        interactor.execute(new SignupInputData(username, password, repeatedPassword));
-    }
+  /** Original JSON-mode constructor path remains unchanged. */
+  public void execute(String username, String password, String repeatedPassword) {
+    interactor.execute(new SignupInputData(username, password, repeatedPassword));
+  }
 
-    /** Navigates to login without attempting registration. */
-    public void showLogin() { viewManager.show("login"); }
+  /** Online mode additionally collects a real email for Supabase Auth. */
+  public void execute(String username, String email, String password,
+      String repeatedPassword) {
+    interactor.execute(new SignupInputData(username, email, password, repeatedPassword));
+  }
+
+  public void showLogin() { viewManager.show("login"); }
 }
