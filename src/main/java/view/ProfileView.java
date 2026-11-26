@@ -5,6 +5,8 @@ import interface_adapter.profile.ProfileController;
 import interface_adapter.profile.ProfileState;
 import interface_adapter.profile.ProfileViewModel;
 import interface_adapter.add_friend.AddFriendController;
+import interface_adapter.respond_friend.RespondFriendController;
+
 import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
@@ -39,7 +41,11 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
   private final JPanel friendsSlot = new JPanel(new BorderLayout());
   private final JPanel pinsSlot = new JPanel(new BorderLayout());
   private final AddFriendController addFriendController;
+  private final RespondFriendController respondController;
   private final DefaultListModel<String> friendsModel = new DefaultListModel<>();
+  private final JList<String> friendsList = new JList<>(friendsModel);
+  private final DefaultListModel<String> requestsModel = new DefaultListModel<>();
+  private final JList<String> requestsList = new JList<>(requestsModel);
   private final JCheckBox confirmLogout = new JCheckBox("Ask before logging out", true);
 
   /**
@@ -50,10 +56,11 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
    * @param profileViewModel observable non-sensitive account display state
    */
   public ProfileView(ProfileController controller, LogoutController logoutController,
-      ProfileViewModel profileViewModel, AddFriendController addFriendController) {
+      ProfileViewModel profileViewModel, AddFriendController addFriendController, RespondFriendController respondController) {
     this.controller = controller;
     this.logoutController = logoutController;
     this.addFriendController = addFriendController;
+    this.respondController = respondController;
     profileViewModel.addPropertyChangeListener(this);
     setLayout(new BorderLayout(16, 16));
     setBorder(BorderFactory.createEmptyBorder(24, 30, 24, 30));
@@ -114,7 +121,7 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
     return content;
   }
 
-  /** Builds the friends list with an add button. */
+  /** Builds the friends list with an add button, and the incoming requests below it. */
   private JPanel makeFriendsPanel() {
     JPanel panel = new JPanel(new BorderLayout(8, 8));
     JButton add = new JButton("Add friend");
@@ -122,7 +129,37 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
     JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
     buttonRow.add(add);
     panel.add(buttonRow, BorderLayout.NORTH);
-    panel.add(new JScrollPane(new JList<>(friendsModel)), BorderLayout.CENTER);
+
+    JPanel lists = new JPanel(new GridLayout(2, 1, 0, 8));
+    lists.add(new JScrollPane(friendsList));
+    lists.add(makeRequestsPanel());
+    panel.add(lists, BorderLayout.CENTER);
+    return panel;
+  }
+
+  /** Builds the incoming-requests list with Accept and Decline buttons. */
+  private JPanel makeRequestsPanel() {
+    JPanel panel = new JPanel(new BorderLayout(4, 4));
+    panel.setBorder(BorderFactory.createTitledBorder("Friend requests"));
+    JButton accept = new JButton("Accept");
+    JButton decline = new JButton("Decline");
+    accept.addActionListener(event -> {
+      String selected = requestsList.getSelectedValue();
+      if (selected != null) {
+        respondController.accept(selected);
+      }
+    });
+    decline.addActionListener(event -> {
+      String selected = requestsList.getSelectedValue();
+      if (selected != null) {
+        respondController.decline(selected);
+      }
+    });
+    JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    buttons.add(accept);
+    buttons.add(decline);
+    panel.add(new JScrollPane(requestsList), BorderLayout.CENTER);
+    panel.add(buttons, BorderLayout.SOUTH);
     return panel;
   }
 
@@ -188,6 +225,10 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
     friendsModel.clear();
     for (String friend : state.getFriends()) {
       friendsModel.addElement(friend);
+    }
+    requestsModel.clear();
+    for (String request : state.getFriendRequests()) {
+      requestsModel.addElement(request);
     }
   }
 }
