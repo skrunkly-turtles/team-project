@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /** Checks authentication, validation, and persistence for the Add Friend use case. */
 class AddFriendInteractorTest {
     /** Test double for presenter notifications. */
-    private static final class Output implements AddFriendOutputBoundary {
+    private static final class Output implements AddFriendOutputBoundary{
         private String error;
         private AddFriendOutputData success;
 

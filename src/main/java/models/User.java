@@ -151,4 +151,10 @@ public final class User {
     }
   }
 
+  /** Removes a friend's username from this user's friend list. */
+  public void removeFriend(String friendUsername) {
+    if(!friends.remove(friendUsername)){
+      throw new IllegalArgumentException("Not a friend");
+    }
+  }
 }

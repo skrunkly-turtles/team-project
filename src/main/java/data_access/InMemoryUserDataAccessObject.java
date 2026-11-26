@@ -15,7 +15,7 @@ import use_case.signup.SignupUserDataAccessInterface;
 /** An in-memory DAO for independently testing the account use cases. */
 public final class InMemoryUserDataAccessObject implements SignupUserDataAccessInterface,
     LoginUserDataAccessInterface, ChangePasswordUserDataAccessInterface,
-    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, RespondFriendUserDataAccessInterface {
+    ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, RemoveFriendDataAccessInterface, RespondFriendUserDataAccessInterface {
   private final Map<String, User> users = new HashMap<>();
 
   /** Returns whether an account exists. */
@@ -67,6 +67,17 @@ public final class InMemoryUserDataAccessObject implements SignupUserDataAccessI
   }
 
   @Override
+  public synchronized void removeFriend(String username, String friendUsername) {
+    User me = users.get(username);
+    User friend = users.get(friendUsername);
+    if (me == null || friend == null || !me.getFriends().contains(friendUsername)) {
+      throw new IllegalStateException("Users are not friends.");
+    }
+    me.removeFriend(friendUsername);
+    if (friend.getFriends().contains(username)) {
+      friend.removeFriend(username);
+    }
+  }
   public synchronized void acceptFriendRequest(String username, String requesterUsername) {
     User me = users.get(username);
     User requester = users.get(requesterUsername);
