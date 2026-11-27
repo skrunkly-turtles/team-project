@@ -7,14 +7,24 @@ import interface_adapter.ViewManagerModel;
 import interface_adapter.change_password.ChangePasswordController;
 import interface_adapter.change_password.ChangePasswordPresenter;
 import interface_adapter.change_password.ChangePasswordViewModel;
+import interface_adapter.delete_pin.DeletePinController;
+import interface_adapter.delete_pin.DeletePinPresenter;
+import interface_adapter.delete_pin.DeletePinViewModel;
+import interface_adapter.edit_pin.EditPinController;
+import interface_adapter.edit_pin.EditPinPresenter;
+import interface_adapter.edit_pin.EditPinViewModel;
 import interface_adapter.home.HomeViewModel;
 import interface_adapter.map.MapController;
 import interface_adapter.map.MapPresenter;
 import interface_adapter.map.MapViewModel;
+import use_case.delete_pin.DeletePinInteractor;
 import interface_adapter.remove_friend.RemoveFriendController;
 import interface_adapter.remove_friend.RemoveFriendPresenter;
 import use_case.display_map.DisplayMapInteractor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
+import use_case.edit_pin.EditPinInteractor;
+import use_case.read_pins.ReadPinsInteractor;
+import view.*;
 import use_case.remove_friend.RemoveFriendInteractor;
 import interface_adapter.respond_friend.RespondFriendController;
 import interface_adapter.respond_friend.RespondFriendPresenter;
@@ -34,6 +44,9 @@ import interface_adapter.signup.SignupPresenter;
 import interface_adapter.signup.SignupViewModel;
 import interface_adapter.add_friend.AddFriendController;
 import interface_adapter.add_friend.AddFriendPresenter;
+import interface_adapter.read_pins.ReadPinsController;
+import interface_adapter.read_pins.ReadPinsPresenter;
+import interface_adapter.read_pins.ReadPinsViewModel;
 import java.awt.Dimension;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -46,12 +59,6 @@ import use_case.logout.LogoutInteractor;
 import use_case.profile.ProfileInteractor;
 import use_case.signup.SignupInteractor;
 import use_case.add_friend.AddFriendInteractor;
-import view.ChangePasswordView;
-import view.HomeView;
-import view.LoginView;
-import view.ProfileView;
-import view.SignupView;
-import view.ViewManager;
 
 /**
  * Composition root: wires use cases to their concrete adapters and Swing screens.
@@ -64,6 +71,8 @@ public final class AppBuilder {
   private JComponent friendsComponent;
   private JComponent pinsComponent;
   private String mapboxToken = System.getenv("MAPBOX_ACCESS_TOKEN");
+
+  private final int MAX_PASSAGE_WORDS = 250;
 
   /**
    * Configures map imagery; null displays local setup instructions.
@@ -146,6 +155,15 @@ public final class AppBuilder {
     AddFriendPresenter addFriendPresenter = new AddFriendPresenter(profileModel);
     AddFriendController addFriendController = new AddFriendController(
             new AddFriendInteractor(accounts, addFriendPresenter, session));
+    ReadPinsViewModel readPinsModel = new ReadPinsViewModel();
+    ReadPinsController readPinsController = new ReadPinsController(
+            new ReadPinsInteractor(accounts, new ReadPinsPresenter(readPinsModel), session));
+    EditPinViewModel editPinModel = new EditPinViewModel();
+    EditPinController editPinController = new EditPinController(new EditPinInteractor(
+            accounts, new EditPinPresenter(editPinModel), session, MAX_PASSAGE_WORDS));
+    DeletePinViewModel deletePinModel = new DeletePinViewModel();
+    DeletePinController deletePinController = new DeletePinController(
+            new DeletePinInteractor(accounts, new DeletePinPresenter(deletePinModel), session));
     RemoveFriendPresenter removeFriendPresenter = new RemoveFriendPresenter(profileModel);
     RemoveFriendController removeFriendController = new RemoveFriendController(
             new RemoveFriendInteractor(removeFriendPresenter, session, accounts));
@@ -158,9 +176,9 @@ public final class AppBuilder {
     if (friendsComponent != null) {
       profileView.setFriendsComponent(friendsComponent);
     }
-    if (pinsComponent != null) {
-      profileView.setPinsComponent(pinsComponent);
-    }
+    profileView.setPinsComponent(new PinView(readPinsController, readPinsModel,
+            profileModel, editPinController, editPinModel, deletePinController, deletePinModel));
+
     ViewManager viewManager = new ViewManager(navigator);
     viewManager.add(new LoginView(loginController, loginModel), "login");
     viewManager.add(new SignupView(signupController, signupModel), "signup");

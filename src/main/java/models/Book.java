@@ -12,6 +12,9 @@ public class Book {
         this.author = author;
         this.year = year;
     }
+    public String getTitle() { return title; }
+    public String getAuthor() { return author; }
+    public int getYear() { return year; }
 
     // Optional constructor to save the archive.org id without affecting other code that relies on Books
     public Book(String title, String author, int year, String id) {

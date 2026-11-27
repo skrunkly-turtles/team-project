@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import models.Book;
 import models.CommonUserFactory;
@@ -107,5 +108,30 @@ class JsonUserDataAccessObjectTest {
     JsonUserDataAccessObject dao = new JsonUserDataAccessObject(file);
     assertFalse(dao.existsByName("alice"));
     assertFalse(Files.exists(file));
+  }
+
+  @Test
+  void deletedPinStaysDeletedAfterRestart() {
+    Path file = directory.resolve("users.json");
+    JsonUserDataAccessObject accounts = new JsonUserDataAccessObject(file);
+    accounts.save(new User("alice", "hash", new ArrayList<>(List.of(
+            new Pin(1, "alice", new Coordinate(1, 2),
+                    new Passage(new Book("B", "A", 2000), "t", 1), "d", true),
+            new Pin(2, "alice", new Coordinate(3, 4),
+                    new Passage(new Book("B", "A", 2000), "t", 1), "d", true))),
+            new ArrayList<>(), new ArrayList<>(), false));
+    accounts.deletePin("alice", 1);
+
+    List<Pin> loaded = new JsonUserDataAccessObject(file).get("alice").getPins();
+    assertEquals(1, loaded.size());
+    assertEquals(2, loaded.get(0).getId());
+  }
+
+  @Test
+  void deletePinRejectsMissingPin() {
+    JsonUserDataAccessObject accounts = new JsonUserDataAccessObject(directory.resolve("u.json"));
+    accounts.save(new User("alice", "hash", new ArrayList<>(), new ArrayList<>(),
+            new ArrayList<>(), false));
+    assertThrows(IllegalStateException.class, () -> accounts.deletePin("alice", 9));
   }
 }

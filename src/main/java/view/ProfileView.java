@@ -109,7 +109,7 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
     identity.add(usernameLabel);
     identity.add(new JLabel("Your passage-map account", SwingConstants.CENTER));
     identity.setBorder(BorderFactory.createCompoundBorder(
-        BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(14, 10, 14, 10)));
+            BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(14, 10, 14, 10)));
     content.add(identity, BorderLayout.NORTH);
 
     JPanel features = new JPanel(new GridLayout(1, 2, 16, 0));
@@ -117,7 +117,7 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
     pinsSlot.setBorder(BorderFactory.createTitledBorder("My Pins"));
     setFriendsComponent(makeFriendsPanel());;
     setPinsComponent(new JLabel("Katelyn's saved-pins component goes here",
-        SwingConstants.CENTER));
+            SwingConstants.CENTER));
     features.add(friendsSlot);
     features.add(pinsSlot);
     content.add(features, BorderLayout.CENTER);
@@ -220,14 +220,14 @@ public final class ProfileView extends JPanel implements PropertyChangeListener 
   /** Opens a functional session-level preference for logout confirmation. */
   private void openSettings() {
     JOptionPane.showMessageDialog(this, confirmLogout,
-        "Account Settings (this session)", JOptionPane.PLAIN_MESSAGE);
+            "Account Settings (this session)", JOptionPane.PLAIN_MESSAGE);
   }
 
   /** Confirms if configured, then delegates the logout operation to its controller. */
   private void requestLogout() {
     if (confirmLogout.isSelected()) {
       int answer = JOptionPane.showConfirmDialog(this, "Log out of your account?",
-          "Confirm logout", JOptionPane.YES_NO_OPTION);
+              "Confirm logout", JOptionPane.YES_NO_OPTION);
       if (answer != JOptionPane.YES_OPTION) {
         return;
       }

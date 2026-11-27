@@ -33,6 +33,13 @@ public class Pin {
     public String getDescription(){
         return description;
     }
+    public int getId() { return id; }
+    public String getOwner() { return owner; }
+    public Coordinate getCoordinate() { return coordinate; }
+    public Passage getPassage() { return passage; }
+    public boolean isVisible() { return visible; }
 
+    public record PinData(int id, String owner, Coordinate coordinate, Passage passage, String description,
+                          boolean visible) { }
 
 }
