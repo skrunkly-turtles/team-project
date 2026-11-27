@@ -55,7 +55,6 @@ public final class PinEditDialog {
         dialog = new JDialog(SwingUtilities.getWindowAncestor(parent), "Edit pin #" + pin.id(),
                 Dialog.ModalityType.APPLICATION_MODAL);
         JPanel fields = new JPanel(new GridLayout(0, 2, 8, 6));
-        addRow(fields, "Name", name);
         addRow(fields, "Latitude", latitude);
         addRow(fields, "Longitude", longitude);
         addRow(fields, "Book", bookTitle);
@@ -67,7 +66,7 @@ public final class PinEditDialog {
         texts.add(titled("Passage", passage));
 
         JButton save = new JButton("Save");
-        save.addActionListener(event -> controller.execute(pinId, name.getText(),
+        save.addActionListener(event -> controller.execute(pinId, pin.owner(),
                 description.getText(), latitude.getText(), longitude.getText(), passage.getText(),
                 bookTitle.getText(), author.getText(), year.getText()));
         JButton cancel = new JButton("Cancel");

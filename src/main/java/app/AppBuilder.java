@@ -7,6 +7,9 @@ import interface_adapter.ViewManagerModel;
 import interface_adapter.change_password.ChangePasswordController;
 import interface_adapter.change_password.ChangePasswordPresenter;
 import interface_adapter.change_password.ChangePasswordViewModel;
+import interface_adapter.delete_pin.DeletePinController;
+import interface_adapter.delete_pin.DeletePinPresenter;
+import interface_adapter.delete_pin.DeletePinViewModel;
 import interface_adapter.edit_pin.EditPinController;
 import interface_adapter.edit_pin.EditPinPresenter;
 import interface_adapter.edit_pin.EditPinViewModel;
@@ -14,6 +17,7 @@ import interface_adapter.home.HomeViewModel;
 import interface_adapter.map.MapController;
 import interface_adapter.map.MapPresenter;
 import interface_adapter.map.MapViewModel;
+import use_case.delete_pin.DeletePinInteractor;
 import use_case.display_map.DisplayMapInteractor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
 import use_case.edit_pin.EditPinInteractor;
@@ -149,13 +153,16 @@ public final class AppBuilder {
     EditPinViewModel editPinModel = new EditPinViewModel();
     EditPinController editPinController = new EditPinController(new EditPinInteractor(
             accounts, new EditPinPresenter(editPinModel), session, MAX_PASSAGE_WORDS));
+    DeletePinViewModel deletePinModel = new DeletePinViewModel();
+    DeletePinController deletePinController = new DeletePinController(
+            new DeletePinInteractor(accounts, new DeletePinPresenter(deletePinModel), session));
 
     ProfileView profileView = new ProfileView(profileController, logoutController, profileModel, addFriendController);
     if (friendsComponent != null) {
       profileView.setFriendsComponent(friendsComponent);
     }
     profileView.setPinsComponent(new PinView(readPinsController, readPinsModel,
-            profileModel, editPinController, editPinModel));
+            profileModel, editPinController, editPinModel, deletePinController, deletePinModel));
 
     ViewManager viewManager = new ViewManager(navigator);
     viewManager.add(new LoginView(loginController, loginModel), "login");
