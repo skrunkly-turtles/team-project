@@ -1,5 +1,12 @@
 package view;
 
+import interface_adapter.delete_pin.DeletePinController;
+import interface_adapter.delete_pin.DeletePinState;
+import interface_adapter.delete_pin.DeletePinViewModel;
+import javax.swing.JOptionPane;
+import interface_adapter.edit_pin.EditPinController;
+import interface_adapter.edit_pin.EditPinState;
+import interface_adapter.edit_pin.EditPinViewModel;
 import interface_adapter.profile.ProfileState;
 import interface_adapter.profile.ProfileViewModel;
 import interface_adapter.read_pins.ReadPinsController;
@@ -26,6 +33,9 @@ public final class PinView extends JPanel {
     private final DefaultListModel<PinData> model = new DefaultListModel<>();
     private final JList<PinData> list = new JList<>(model);
     private final JLabel statusLabel = new JLabel(" ", SwingConstants.CENTER);
+    private final PinEditDialog editDialog;
+    private final DeletePinController deleteController;
+    private String currentUsername;
 
     /**
      * Creates the widget and subscribes it to the state it displays.
@@ -35,8 +45,11 @@ public final class PinView extends JPanel {
      * @param profileModel observable profile state, used to reload when the profile changes
      */
     public PinView(ReadPinsController controller, ReadPinsViewModel pinsModel,
-                   ProfileViewModel profileModel) {
+                   ProfileViewModel profileModel, EditPinController editController,
+                   EditPinViewModel editModel, DeletePinController deleteController, DeletePinViewModel deletePinViewModel) {
         this.controller = controller;
+        this.editDialog = new PinEditDialog(editController);
+        this.deleteController = deleteController;
         setLayout(new BorderLayout(8, 8));
         setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
@@ -55,7 +68,11 @@ public final class PinView extends JPanel {
                 int index = list.locationToIndex(event.getPoint());
                 Rectangle bounds = index >= 0 ? list.getCellBounds(index, index) : null;
                 if (bounds != null && bounds.contains(event.getPoint())) {
-                    PinDetailsDialogue.show(PinView.this, model.get(index));
+                    PinData pin = model.get(index);
+                    boolean mine = pin.owner().equals(currentUsername);
+                    PinDetailsDialogue.show(PinView.this, pin,
+                            mine ? () -> editDialog.open(PinView.this, pin) : null,
+                            mine ? () -> confirmDelete(pin) : null);
                 }
             }
         });
@@ -67,10 +84,19 @@ public final class PinView extends JPanel {
                 event -> showPins((ReadPinsState) event.getNewValue()));
         profileModel.addPropertyChangeListener(
                 event -> onProfileChanged((ProfileState) event.getNewValue()));
+        editModel.addPropertyChangeListener(event -> {
+            EditPinState state = (EditPinState) event.getNewValue();
+            editDialog.onResult(state);
+            if (state.isSuccess()) {
+                controller.execute();
+            }
+        });
+
     }
 
     /** Reloads when a signed-in profile is shown, and clears everything on logout. */
     private void onProfileChanged(ProfileState state) {
+        currentUsername = state.getUsername();
         if (state.getUsername() == null) {
             model.clear();
             statusLabel.setText(" ");
@@ -89,6 +115,15 @@ public final class PinView extends JPanel {
             statusLabel.setText(state.getMessage());
         } else {
             statusLabel.setText(model.isEmpty() ? "No pins to show." : " ");
+        }
+    }
+    /** Asks for confirmation, then deletes the pin. */
+    private void confirmDelete(PinData pin) {
+        int answer = JOptionPane.showConfirmDialog(this,
+                "Delete Pin #" + pin.id() + "? This cannot be undone.", "Delete pin",
+                JOptionPane.YES_NO_OPTION);
+        if (answer == JOptionPane.YES_OPTION) {
+            deleteController.execute(pin.id());
         }
     }
 }

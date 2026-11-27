@@ -19,8 +19,12 @@ import models.Pin.PinData;
 public final class PinDetailsDialogue {
     private PinDetailsDialogue() { }
 
-    /** Shows the pin in a modal dialog over the window containing {@code parent}. */
     public static void show(Component parent, PinData pin) {
+        show(parent, pin, null, null);
+    }
+
+    /** Shows the pin in a modal dialog over the window containing {@code parent}. */
+    public static void show(Component parent, PinData pin, Runnable onEdit, Runnable onDelete) {
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent),
                 "Pin #" + pin.id(), Dialog.ModalityType.APPLICATION_MODAL);
 
@@ -41,6 +45,22 @@ public final class PinDetailsDialogue {
         JButton close = new JButton("Close");
         close.addActionListener(event -> dialog.dispose());
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        if (onEdit != null) {
+            JButton edit = new JButton("Edit");
+            edit.addActionListener(event -> {
+                dialog.dispose();
+                onEdit.run();
+            });
+            buttons.add(edit);
+        }
+        if (onDelete != null) {
+            JButton delete = new JButton("Delete");
+            delete.addActionListener(event -> {
+                dialog.dispose();
+                onDelete.run();
+            });
+            buttons.add(delete);
+        }
         buttons.add(close);
 
         JPanel content = new JPanel(new BorderLayout(10, 10));
