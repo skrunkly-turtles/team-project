@@ -18,11 +18,19 @@ import interface_adapter.map.MapController;
 import interface_adapter.map.MapPresenter;
 import interface_adapter.map.MapViewModel;
 import use_case.delete_pin.DeletePinInteractor;
+import interface_adapter.remove_friend.RemoveFriendController;
+import interface_adapter.remove_friend.RemoveFriendPresenter;
 import use_case.display_map.DisplayMapInteractor;
 import org.jxmapviewer.viewer.DefaultTileFactory;
 import use_case.edit_pin.EditPinInteractor;
 import use_case.read_pins.ReadPinsInteractor;
 import view.*;
+import use_case.remove_friend.RemoveFriendInteractor;
+import interface_adapter.respond_friend.RespondFriendController;
+import interface_adapter.respond_friend.RespondFriendPresenter;
+import use_case.respond_friend.RespondFriendInteractor;
+import view.MapPanel;
+import view.MapboxTileFactoryInfo;
 import interface_adapter.login.LoginController;
 import interface_adapter.login.LoginPresenter;
 import interface_adapter.login.LoginViewModel;
@@ -156,8 +164,15 @@ public final class AppBuilder {
     DeletePinViewModel deletePinModel = new DeletePinViewModel();
     DeletePinController deletePinController = new DeletePinController(
             new DeletePinInteractor(accounts, new DeletePinPresenter(deletePinModel), session));
+    RemoveFriendPresenter removeFriendPresenter = new RemoveFriendPresenter(profileModel);
+    RemoveFriendController removeFriendController = new RemoveFriendController(
+            new RemoveFriendInteractor(removeFriendPresenter, session, accounts));
+    RespondFriendPresenter respondFriendPresenter = new RespondFriendPresenter(profileModel);
+    RespondFriendController respondFriendController = new RespondFriendController(new RespondFriendInteractor(accounts,
+            respondFriendPresenter, session));
 
-    ProfileView profileView = new ProfileView(profileController, logoutController, profileModel, addFriendController);
+
+    ProfileView profileView = new ProfileView(profileController, logoutController, profileModel, addFriendController, removeFriendController, respondFriendController);
     if (friendsComponent != null) {
       profileView.setFriendsComponent(friendsComponent);
     }

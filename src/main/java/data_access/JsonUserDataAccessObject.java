@@ -25,6 +25,8 @@ import use_case.edit_pin.EditPinUserDataAccessInterface;
 import use_case.login.LoginUserDataAccessInterface;
 import use_case.profile.ProfileUserDataAccessInterface;
 import use_case.read_pins.ReadPinsUserDataAccessInterface;
+import use_case.remove_friend.RemoveFriendDataAccessInterface;
+import use_case.respond_friend.RespondFriendUserDataAccessInterface;
 import use_case.signup.SignupUserDataAccessInterface;
 import use_case.add_friend.AddFriendUserDataAccessInterface;
 
@@ -32,7 +34,7 @@ import use_case.add_friend.AddFriendUserDataAccessInterface;
 public final class JsonUserDataAccessObject implements SignupUserDataAccessInterface,
     LoginUserDataAccessInterface, ChangePasswordUserDataAccessInterface,
     ProfileUserDataAccessInterface, AddFriendUserDataAccessInterface, EditPinUserDataAccessInterface, ReadPinsUserDataAccessInterface,
-        DeletePinUserDataAccessInterface {
+        DeletePinUserDataAccessInterface, RemoveFriendDataAccessInterface, RespondFriendUserDataAccessInterface {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final Type PIN_LIST_TYPE = new TypeToken<ArrayList<Pin>>() { }.getType();
 
@@ -164,6 +166,61 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
     }
     return all;
   }
+  /** Makes both users friends and clears the request, writing the file before committing. */
+  /** Removes the friendship from both accounts, writing the file before committing. */
+  @Override
+  public synchronized void removeFriend(String username, String friendUsername) {
+    User me = copy(requireUser(username));
+    User friend = copy(requireUser(friendUsername));
+    if (!me.getFriends().contains(friendUsername)) {
+      throw new IllegalStateException("Users are not friends.");
+    }
+    me.removeFriend(friendUsername);
+    if (friend.getFriends().contains(username)) {
+      friend.removeFriend(username);
+    }
+    Map<String, User> proposed = new HashMap<>(users);
+    proposed.put(username, me);
+    proposed.put(friendUsername, friend);
+    persist(proposed);
+    users = proposed;
+  }
+    /** Makes both users friends and clears the request, writing the file before committing. */
+  @Override
+  public synchronized void acceptFriendRequest(String username, String requesterUsername) {
+    User me = copy(requireUser(username));
+    User requester = copy(requireUser(requesterUsername));
+    if (!me.getFriendRequests().contains(requesterUsername)) {
+      throw new IllegalStateException("No pending request.");
+    }
+    if (me.getFriends().contains(requesterUsername)
+            || requester.getFriends().contains(username)) {
+      throw new IllegalStateException("Users are already friends.");
+    }
+    me.removeFriendRequest(requesterUsername);
+    requester.removeFriendRequest(username);
+    me.addFriend(requesterUsername);
+    requester.addFriend(username);
+    Map<String, User> proposed = new HashMap<>(users);
+    proposed.put(username, me);
+    proposed.put(requesterUsername, requester);
+    persist(proposed);
+    users = proposed;
+  }
+
+  /** Removes a pending request and writes the file before committing. */
+  @Override
+  public synchronized void declineFriendRequest(String username, String requesterUsername) {
+    User me = copy(requireUser(username));
+    if (!me.getFriendRequests().contains(requesterUsername)) {
+      throw new IllegalStateException("No pending request.");
+    }
+    me.removeFriendRequest(requesterUsername);
+    Map<String, User> proposed = new HashMap<>(users);
+    proposed.put(username, me);
+    persist(proposed);
+    users = proposed;
+  }
 
   /** Persists a complete updated pin list for an existing account. */
   public synchronized void updatePins(String username, List<Pin> pins) {
@@ -180,7 +237,7 @@ public final class JsonUserDataAccessObject implements SignupUserDataAccessInter
   public synchronized void updateVisibility(String username, boolean visible) {
     User current = requireUser(username);
     saveReplacement(new User(username, current.getPasswordHash(), copyPins(current.getPins()),
-        new ArrayList<>(current.getFriends()), new ArrayList<>(current.getFriends()), visible));
+            new ArrayList<>(current.getFriends()), new ArrayList<>(current.getFriendRequests()), visible));
   }
 
   /** Returns the existing account; updates must never manufacture users. */
